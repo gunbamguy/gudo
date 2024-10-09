@@ -488,3 +488,13 @@ body {
     text-decoration: underline;
     font-weight: bold; /* 가독성을 높이기 위해 굵게 설정 */
 }
+
+/* 오른쪽 메뉴 스타일 */
+.navbar .navbar-right > li > a {
+    color: yellow;
+}
+
+.navbar .navbar-right > li > a:hover,
+.navbar .navbar-right > li > a:focus {
+    background-color: #444;
+}
