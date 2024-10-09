@@ -36,6 +36,7 @@ async function openFolder() {
     showFileListModal(entries);
 }
 
+// loadDefault 함수 수정하여 기본 데이터를 불러올 때도 메모 포함
 async function loadDefault() {
     if (!directoryHandle) {
         alert('먼저 폴더를 설정해주세요.');
@@ -54,6 +55,7 @@ async function loadDefault() {
         alert('default.txt 파일을 불러오는데 실패했습니다.');
     }
 }
+
 
 function loadDataFromContent(content) {
     loadDataFromBase64(content);
