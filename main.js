@@ -54,13 +54,7 @@ dbRequest.onsuccess = function(event) {
 
 // 페이지 로드 시 실행
 $(document).ready(function() {
-	$('#load-data-button').on('click', function() {
-        const base64Data = prompt('불러올 데이터를 입력하세요:');
-        if (base64Data) {
-            loadDataFromBase64(base64Data);
-        }
-		});
-    // Summernote 에디터 초기화 (챔피언 메모)
+	    // Summernote 에디터 초기화 (챔피언 메모)
     $('#editor').summernote({
         height: 'auto',
         minHeight: 150,
@@ -1294,6 +1288,7 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
     modal.show();
 }
 
+
 // getColor 함수 추가
 // 스킬 인덱스에 따라 색상을 결정하는 함수
 function getColor(championIndex, spellIndex) {
@@ -1416,7 +1411,7 @@ function initializeHorizontalDrag() {
 // ... 기존 코드 ...
 
 // loadDataFromBase64 함수 수정
-function loadDataFromBase64(base64Data) {
+
     try {
         const jsonStr = decodeURIComponent(escape(atob(base64Data)));
         const data = JSON.parse(jsonStr);
@@ -1490,5 +1485,3 @@ function loadDataFromBase64(base64Data) {
     }
 }
 // 기존 데이터 로딩 버튼 이벤트 리스너 수정
-
-
