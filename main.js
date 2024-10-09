@@ -783,8 +783,9 @@ function exportData() {
         myTeam: [],
         enemyTeam: [],
         formationMemo: $('#formation-editor').summernote('code'),
-        memoContent: $('#editor').summernote('code'), // 챔피언 메모 에디터 내용 추가
-        formationMemos: formationMemos // formationMemos 추가
+        memoContent: $('#editor').summernote('code'), // 일반 메모
+        formationMemos: formationMemos, // 포지션 메모
+        championMemos: {} // 챔피언별 메모
     };
 
     // 내 팀 데이터 수집
@@ -811,21 +812,42 @@ function exportData() {
         }
     }
 
-    // JSON 문자열을 Base64로 인코딩
-    const jsonStr = JSON.stringify(data);
-    const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
+    // IndexedDB에서 모든 챔피언 메모 가져오기
+    if (!db) {
+        alert('데이터베이스가 초기화되지 않았습니다.');
+        return;
+    }
 
-    // 텍스트 파일로 다운로드
-    const blob = new Blob([base64Str], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'champion_data.txt';
-    a.click();
-    URL.revokeObjectURL(url);
+    const transaction = db.transaction(['memos'], 'readonly');
+    const store = transaction.objectStore('memos');
+    const request = store.getAll();
+
+    request.onsuccess = function() {
+        request.result.forEach(record => {
+            data.championMemos[record.championId] = record.memoContent;
+        });
+
+        // JSON 문자열을 Base64로 인코딩
+        const jsonStr = JSON.stringify(data);
+        const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
+
+        // 텍스트 파일로 다운로드
+        const blob = new Blob([base64Str], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'champion_data.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    request.onerror = function(event) {
+        console.error('챔피언 메모 내보내기 실패:', event.target.error);
+        alert('챔피언 메모 내보내기에 실패했습니다.');
+    };
 }
 
-// 데이터 불러오기 함수
+// 데이터 불러오기 함수 수정
 function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -841,7 +863,7 @@ function importData(event) {
             version = data.version;
             myTeamSlots = data.myTeamSlots;
             enemyTeamSlots = data.enemyTeamSlots;
-            formationMemos = data.formationMemos || {}; // formationMemos 추가
+            formationMemos = data.formationMemos || {}; // 포지션 메모
 
             // 챔피언 데이터 다시 로드
             fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion.json`)
@@ -881,6 +903,16 @@ function importData(event) {
                         store.clear(); // 기존 formations 삭제
                         for (const key in formationMemos) {
                             store.put({ key: key, memoContent: formationMemos[key] });
+                        }
+                    }
+
+                    // 챔피언 메모 복원
+                    if (db && data.championMemos) {
+                        const transaction = db.transaction(['memos'], 'readwrite');
+                        const store = transaction.objectStore('memos');
+                        store.clear(); // 기존 메모 삭제
+                        for (const champId in data.championMemos) {
+                            store.put({ championId: champId, memoContent: data.championMemos[champId] });
                         }
                     }
 
@@ -1006,7 +1038,8 @@ function exportDataToClipboard() {
         enemyTeam: [],
         formationMemo: $('#formation-editor').summernote('code'),
         memoContent: $('#editor').summernote('code'),
-        formationMemos: formationMemos
+        formationMemos: formationMemos,
+        championMemos: {}
     };
 
     // 내 팀 데이터 수집
@@ -1025,27 +1058,48 @@ function exportDataToClipboard() {
         data.enemyTeam.push(img.length > 0 ? img.attr('alt') : null);
     }
 
-    // JSON 문자열을 Base64로 인코딩
-    const jsonStr = JSON.stringify(data);
-    try {
-        const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
-        // 클립보드에 복사
-        navigator.clipboard.writeText(base64Str).then(() => {
-            alert('데이터가 클립보드에 복사되었습니다.');
-        }).catch(err => {
-            console.error('클립보드 복사 실패:', err);
-            alert('데이터 클립보드 복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
-        });
-    } catch (error) {
-        console.error('Base64 인코딩 오류:', error);
-        alert('데이터 인코딩에 실패했습니다.');
+    // IndexedDB에서 모든 챔피언 메모 가져오기
+    if (!db) {
+        alert('데이터베이스가 초기화되지 않았습니다.');
+        return;
     }
+
+    const transaction = db.transaction(['memos'], 'readonly');
+    const store = transaction.objectStore('memos');
+    const request = store.getAll();
+
+    request.onsuccess = function() {
+        request.result.forEach(record => {
+            data.championMemos[record.championId] = record.memoContent;
+        });
+
+        // JSON 문자열을 Base64로 인코딩
+        const jsonStr = JSON.stringify(data);
+        try {
+            const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
+            // 클립보드에 복사
+            navigator.clipboard.writeText(base64Str).then(() => {
+                alert('데이터가 클립보드에 복사되었습니다.');
+            }).catch(err => {
+                console.error('클립보드 복사 실패:', err);
+                alert('데이터 클립보드 복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
+            });
+        } catch (error) {
+            console.error('Base64 인코딩 오류:', error);
+            alert('데이터 인코딩에 실패했습니다.');
+        }
+    };
+
+    request.onerror = function(event) {
+        console.error('챔피언 메모 내보내기 실패:', event.target.error);
+        alert('챔피언 메모 내보내기에 실패했습니다.');
+    };
 }
 
 
 // 비교 기능 관련 함수들 (compareSlots, getColor 등)
 
-// Function to compare slots and show graph
+
 // Function to compare slots and show graph
 function compareSlots(mySlotNumber, enemySlotNumber) {
     // 1-based index를 0-based index로 변환
@@ -1240,14 +1294,6 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
     modal.show();
 }
 
-
-// 페이지 전환 함수
-
-
-
-// 색상 가져오기 함수
-
-
 // getColor 함수 추가
 // 스킬 인덱스에 따라 색상을 결정하는 함수
 function getColor(championIndex, spellIndex) {
@@ -1369,6 +1415,7 @@ function initializeHorizontalDrag() {
 
 // ... 기존 코드 ...
 
+// loadDataFromBase64 함수 수정
 function loadDataFromBase64(base64Data) {
     try {
         const jsonStr = decodeURIComponent(escape(atob(base64Data)));
@@ -1378,7 +1425,7 @@ function loadDataFromBase64(base64Data) {
         version = data.version;
         myTeamSlots = data.myTeamSlots;
         enemyTeamSlots = data.enemyTeamSlots;
-        formationMemos = data.formationMemos || {}; // 추가된 부분
+        formationMemos = data.formationMemos || {}; // 포지션 메모
 
         // 챔피언 데이터 다시 로드
         fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion.json`)
@@ -1421,6 +1468,16 @@ function loadDataFromBase64(base64Data) {
                     }
                 }
 
+                // 챔피언 메모 복원
+                if (db && data.championMemos) {
+                    const transaction = db.transaction(['memos'], 'readwrite');
+                    const store = transaction.objectStore('memos');
+                    store.clear(); // 기존 메모 삭제
+                    for (const champId in data.championMemos) {
+                        store.put({ championId: champId, memoContent: data.championMemos[champId] });
+                    }
+                }
+
                 alert('데이터가 성공적으로 불러와졌습니다.');
             })
             .catch(error => {
@@ -1432,7 +1489,6 @@ function loadDataFromBase64(base64Data) {
         alert('데이터 불러오기에 실패했습니다.');
     }
 }
-
 // 기존 데이터 로딩 버튼 이벤트 리스너 수정
 
 
