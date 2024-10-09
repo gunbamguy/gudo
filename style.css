@@ -1,0 +1,490 @@
+
+/* 기본 스타일 설정 */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* 상단 영역과 하단 영역을 분할하기 위한 컨테이너 */
+#top-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+/* 상하 드래그바 스타일 */
+#horizontal-divider {
+    width: 100%;
+    height: 10px;
+    background: #ccc;
+    cursor: row-resize;
+    transition: background 0.3s;
+    position: relative;
+    z-index: 2;
+}
+
+#horizontal-divider:hover {
+    background: #999;
+}
+
+/* 상단 Split 컨테이너 */
+#split-container {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+/* 분할 섹션 스타일 */
+.split-section {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    position: relative;
+}
+
+/* 왼쪽 챔피언 정보 영역 */
+#info-container {
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+    padding: 10px;
+    overflow: auto;
+}
+
+/* 가운데 메인 콘텐츠 영역 */
+#main-container {
+    flex: 2;
+    min-width: 300px;
+    max-width: 600px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: auto;
+}
+
+/* 오른쪽 챔피언 메모 작성 영역 */
+#memo-container {
+    flex: 3;
+    min-width: 550px;
+    padding: 10px;
+    overflow: auto;
+}
+
+/* 드래그바 스타일 */
+.divider {
+    background-color: #ccc;
+    cursor: col-resize;
+    width: 5px;
+    height: 100%;
+    position: relative;
+    z-index: 2;
+}
+
+#vertical-divider-left,
+#vertical-divider-right {
+    background-color: #ccc;
+    cursor: col-resize;
+    width: 5px;
+    height: 100%;
+}
+
+#vertical-divider-left:hover,
+#vertical-divider-right:hover {
+    background-color: #999;
+}
+
+/* 하단 구도 메모 영역 */
+#formation-container {
+    flex-shrink: 0;
+    width: 100%;
+    background: #f9f9f9;
+    padding: 20px;
+    border-top: 2px solid #000;
+    box-sizing: border-box;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    transition: height 0.2s ease;
+    position: relative;
+}
+
+#formation-container h2 {
+    font-size: 20px; /* 글자 크기를 원하는 크기로 설정 (예: 20px) */
+    font-weight: bold; /* 굵기를 설정할 수도 있음 */
+    margin-bottom: 10px
+	margin-top: 10px; /* 아래쪽에 간격을 줄 수도 있음 */
+}
+
+#champion-info img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+    #info-container,
+    #memo-container {
+        flex: 1;
+    }
+    #main-container {
+        flex: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    #split-container {
+        flex-direction: column;
+    }
+    .divider.vertical-divider, .divider.vertical-divider-right {
+        width: 100%;
+        height: 5px;
+        cursor: row-resize;
+    }
+    #info-container,
+    #memo-container {
+        width: 100%;
+        max-width: none;
+        border: none;
+        padding: 10px 0;
+    }
+    #main-container {
+        width: 100%;
+        max-width: none;
+        padding: 10px 0;
+    }
+    #team-slots {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+}
+
+/* 추가 버튼 스타일 */
+#export-data-button, #import-data-button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* 기타 버튼 그룹 스타일 */
+.slot-buttons button, .data-buttons button {
+    margin: 0 5px;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* 팀 슬롯 섹션 */
+/* 팀 슬롯 섹션 수정 */
+#team-slots {
+    display: flex;
+    justify-content: center;
+    gap: 40px; /* 팀과 비교 버튼 간 간격 조정 */
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* 비교 버튼 컨테이너 스타일 */
+.comparison-container {
+    display: flex;
+    flex-direction: column; /* 버튼을 세로로 배치 */
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    margin-left: 20px; /* enemy-team과의 간격 조정 */
+}
+
+/* 비교 버튼 스타일 */
+.compare-btn {
+    margin: 10px 0;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.compare-btn:hover {
+    background-color: #45a049;
+}
+
+
+/* 팀 컨테이너 */
+.team-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* 수평 중앙 정렬 */
+    text-align: center; /* 텍스트 중앙 정렬 */
+}
+
+/* 팀 슬롯 */
+.team {
+    display: flex;
+    flex-direction: column; /* 슬롯을 가로로 배치 */
+    flex-wrap: wrap; /* 슬롯이 넘어갈 경우 줄 바꿈 */
+    justify-content: center; /* 슬롯을 중앙에 배치 */
+    gap: 10px; /* 슬롯 간 간격 */
+}
+
+.slot {
+    width: 80px;
+    height: 80px;
+    border: 1px solid #000;
+    text-align: center;
+    line-height: 80px;
+    cursor: pointer;
+    position: relative;
+}
+
+.slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+/* 모달 스타일 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 3;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    width: 90%;
+    max-width: 800px; /* 모달 너비 증가 */
+    text-align: center;
+    border-radius: 8px;
+}
+
+/* 챔피언 리스트 스타일 */
+#champion-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 최소 너비를 100px로 설정 */
+    gap: 20px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+#champion-list button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid #000;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    text-align: center;
+}
+
+#champion-list img {
+    width: 80px; /* 이미지 크기 설정 */
+    height: 80px;
+    object-fit: cover;
+    margin-bottom: 5px; /* 이미지와 이름 사이 간격 */
+}
+
+/* Summernote 에디터 스타일 */
+#editor, #formation-editor {
+    flex-grow: 1;
+    width: 100%;
+    height: auto; /* 자동 높이 설정 */
+    min-height: 150px; 
+    max-height: 100%; 
+    box-sizing: border-box;
+    resize: vertical; /* 사용자가 수직으로 크기 조정 가능 */
+}
+.note-editor .note-editable {
+    height: 100%;
+}
+
+
+/* 버튼 스타일 유지 */
+#save-memo-button,
+#save-formation-memo-button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+
+.compressed-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover; /* 이미지 비율을 유지하며 부모 크기에 맞춤 */
+    border-radius: 4px; /* 모서리를 둥글게 */
+    margin: 5px; /* 이미지 간 간격 */
+}
+.comparison-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.compare-btn {
+    margin: 0 10px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.compare-btn:hover {
+    background-color: #45a049;
+}
+
+
+/* ... [Previous CSS remains unchanged] */
+
+/* Comparison Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 20px;
+    width: 90%;
+    max-width: 800px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.page-nav button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.compare-page {
+    margin-top: 20px;
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.comparison-table th, .comparison-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.comparison-table th {
+    background-color: #f2f2f2;
+}
+
+.comparison-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#export-data-button, #import-data-button, #copy-to-clipboard-button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#load-data-button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* ... [Rest of the CSS remains unchanged] */
+/* 제작자 링크 스타일 */
+.navbar-nav > li > a[href*="cyborgman.tistory.com"] {
+    color: #d1180b;
+	text-decoration: underline;
+    font-weight: bold; /* 가독성을 높이기 위해 굵게 설정 */
+}
+
+
+/* Load Formation Modal Styles */
+#load-formation-modal {
+    display: none; /* 기본적으로 숨김 */
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+
+#load-formation-modal .modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 8px;
+}
+
+#load-formation-modal ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#load-formation-modal li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+#load-formation-modal li:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+/* 제작자 링크 스타일 */
+.navbar-nav > li > a[href*="cyborgman.tistory.com"] {
+    color: #d1180b;
+    text-decoration: underline;
+    font-weight: bold; /* 가독성을 높이기 위해 굵게 설정 */
+}
