@@ -10,6 +10,17 @@ $(document).ready(function() {
             loadDataFromBase64(base64Data);
         }
     });
+	
+	$('#delete-memory-button').on('click', function() {
+        if (confirm('현재 챔프 데이터 삭제하시겠습니까?')) {
+            deleteAllData();
+            alert('챔프 데이터 삭제되었습니다.');
+        } else {
+            alert('삭제가 취소되었습니다.');
+        }
+    });
+	
+	
 	$('#editor').summernote({
         height: 'auto',
         minHeight: 150,
@@ -233,7 +244,25 @@ $(document).ready(function() {
         }
 });
 
+// 모든 메모리와 인덱스 데이터베이스 삭제 함수
+function deleteAllData() {
+    // 일반 메모 삭제
+    $('#editor').summernote('code', '');
 
+    // 구도 메모 삭제
+    $('#formation-editor').summernote('code', '');
 
+    // IndexedDB 모든 데이터 삭제
+    if (db) {
+        // memos 데이터 삭제
+        let transaction = db.transaction(['memos'], 'readwrite');
+        let memosStore = transaction.objectStore('memos');
+        memosStore.clear();
 
-// 기존 데이터 로딩 버튼 이벤트 리스너 수정
+        // formations 데이터 삭제
+        transaction = db.transaction(['formations'], 'readwrite');
+        let formationsStore = transaction.objectStore('formations');
+        formationsStore.clear();
+    }
+}
+
