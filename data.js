@@ -115,7 +115,7 @@ function saveFormation() {
         store.put({ key: key, memoContent: memoContent });
 
         transaction.oncomplete = function() {
-            alert('Formation saved.');
+            alert('저장 완료.');
         };
 
         transaction.onerror = function(event) {
@@ -123,7 +123,7 @@ function saveFormation() {
             alert('Failed to save formation.');
         };
     } else {
-        alert('Both first slots of your team and the enemy team must have a champion selected.');
+        alert('양쪽 챔프를 선택해야 구도 저장됩니다..');
     }
 }
 
