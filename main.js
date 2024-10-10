@@ -226,7 +226,7 @@ $(document).ready(function() {
         if (currentChampionId) {
             saveMemo(currentChampionId, { memoContent: memoContent });
         } else {
-            alert('No champion selected.');
+            alert('챔프를 선택하세요.');
         }
     });
 
