@@ -37,9 +37,38 @@ $(document).ready(function() {
 });
 
 // Initialize Vertical Drag
+// Initialize Vertical Drag
 function initializeVerticalDrag() {
-    // Existing code for vertical drag
+    const verticalDivider = document.getElementById('vertical-divider-right');
+    let isDragging = false;
+
+    verticalDivider.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        isDragging = true;
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+
+        const containerWidth = document.getElementById('split-container').clientWidth;
+        let newWidth = e.clientX - verticalDivider.offsetWidth / 2;
+
+        // Set minimum and maximum width for responsiveness
+        const minWidth = containerWidth * 0.2; // 20% of the container width
+        const maxWidth = containerWidth * 0.8; // 80% of the container width
+
+        if (newWidth < minWidth) newWidth = minWidth;
+        if (newWidth > maxWidth) newWidth = maxWidth;
+
+        document.getElementById('main-container').style.width = `${newWidth}px`;
+        document.getElementById('memo-container').style.width = `${containerWidth - newWidth - verticalDivider.offsetWidth}px`;
+    });
+
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+    });
 }
+
 
 // Initialize Horizontal Drag
 function initializeHorizontalDrag() {
