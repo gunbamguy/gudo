@@ -83,7 +83,7 @@ body {
 /* 오른쪽 챔피언 메모 작성 영역 */
 #memo-container {
     flex: 3;
-    min-width: 550px;
+    min-width: 350px;
     padding: 10px;
     overflow: auto;
 }
@@ -210,10 +210,17 @@ body {
     flex-direction: column; /* 버튼을 세로로 배치 */
     justify-content: flex-start;
     align-items: center;
-    gap: 10px;
+    gap: 50px;
     margin-left: 20px; /* enemy-team과의 간격 조정 */
 }
 
+#comparison-buttons {
+    display: flex;
+    justify-content: center;  /* 가로 정렬: 가운데 정렬 */
+    align-items: center;      /* 세로 정렬: 가운데 정렬 */
+    flex-direction: column;   /* 필요 시 버튼을 세로로 배치 */
+    height: 100%;             /* 컨테이너 높이 전체 사용 */
+}
 /* 비교 버튼 스타일 */
 .compare-btn {
     margin: 10px 0;
@@ -223,6 +230,7 @@ body {
     border: none;
     cursor: pointer;
     border-radius: 5px;
+    text-align: center; /* 텍스트 가운데 정렬 */
 }
 
 .compare-btn:hover {
@@ -498,3 +506,180 @@ body {
 .navbar .navbar-right > li > a:focus {
     background-color: #444;
 }
+/* 모바일 디바이스 레이아웃 설정 (최대 너비 768px) */
+@media only screen and (max-width: 768px) {
+    body {
+        flex-direction: column;
+        padding: 0;
+        height: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #container {
+        flex-direction: column;
+        padding: 0;
+        height: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+    }
+
+    /* 세로 레이아웃으로 변경 및 순서 설정 */
+    #split-container {
+        flex-direction: column;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        height: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+    }
+
+    /* 각 컨테이너의 순서 설정 */
+    #main-container {
+        order: 1;
+    }
+
+    #memo-container {
+        order: 2;
+        width: 100%;  /* 화면 너비에 맞추기 */
+        max-width: 100%;  /* 최대 너비 설정 */
+        padding: 10px;  /* 패딩 줄임 */
+        margin: 0 auto;  /* 중앙 정렬 */
+        overflow-x: hidden;  /* 가로 스크롤 방지 */
+        box-sizing: border-box;  /* 패딩을 포함한 크기 설정 */
+    }
+
+    #formation-container {
+        order: 3;
+    }
+
+    #info-container {
+        order: 4;
+    }
+
+    /* 스크롤 및 패딩 설정 */
+    #info-container,
+    #main-container,
+    #formation-container {
+        width: 100%;
+        max-width: 100%;
+        padding: 10px;  /* 패딩 줄임 */
+        margin: 0 auto;  /* 중앙 정렬 */
+        height: auto;
+        flex: none;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+    }
+
+    /* 팀 슬롯 요소 높이 및 가로 정렬 */
+    #team-slots {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        gap: 20px;
+        margin-bottom: 30px;
+        height: 300px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* 가로 드래그바 (resize-handle-horizontal) 숨기기 */
+    #horizontal-divider {
+        display: none;
+    }
+
+    .divider {
+        height: 5px;
+        width: 100%;
+        cursor: row-resize;
+    }
+
+    #formation-container {
+        width: 100%;
+        padding: 20px;
+        margin: 0;
+        box-sizing: border-box;
+        height: auto;
+        min-height: 300px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modal {
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-content {
+        width: 90%;
+        max-width: 500px;
+        padding: 20px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* 데이터 버튼과 챔피언 선택 버튼 숨기기 */
+    #data-buttons,
+    #select-champion-button {
+        display: none;
+    }
+
+    .navbar {
+        display: flex;
+        flex-direction: column;  /* 버튼들을 세로로 정렬 */
+        align-items: center;  /* 버튼들을 가운데 정렬 */
+        gap: 10px;  /* 버튼들 간의 간격 설정 */
+        padding: 20px;  /* 컨테이너 내 여백 */
+    }
+
+    /* 버튼들의 스타일 설정 */
+    .navbar .btn {
+        width: 80%;  /* 모바일 화면에서 버튼 너비를 80%로 설정 */
+        max-width: 400px;  /* 최대 너비를 400px로 제한 */
+        padding: 15px;  /* 버튼의 패딩 설정 */
+        font-size: 16px;  /* 버튼 텍스트 크기 */
+        cursor: pointer;  /* 커서 설정 */
+    }
+
+    /* 링크의 스타일 설정 */
+    .navbar-right {
+        display: flex;
+        flex-direction: column;  /* 링크를 세로로 나열 */
+        align-items: center;  /* 링크를 가운데 정렬 */
+        gap: 5px;  /* 링크 간 간격 설정 */
+        margin-top: 10px;  /* 버튼과 링크 사이 여백 */
+    }
+
+    .navbar-right > li > a {
+        color: yellow;  /* 링크 색상 설정 */
+        text-decoration: none;  /* 밑줄 제거 */
+        padding: 10px 20px;  /* 링크 내 여백 설정 */
+        font-size: 16px;  /* 링크 텍스트 크기 */
+        background-color: #444;  /* 링크 배경색 설정 */
+        border-radius: 5px;  /* 모서리를 둥글게 */
+    }
+
+    .navbar-right > li > a:hover,
+    .navbar-right > li > a:focus {
+        background-color: #333;  /* 마우스를 올렸을 때 배경색 변경 */
+    }
+	    .nav.navbar-nav.navbar-right {
+        display: none;
+    }
+	
+
+    /* 폴더 관련 버튼들 숨기기 */
+    #set-folder-button,
+    #open-folder-button,
+    #load-default-button {
+        display: none;
+}
+
