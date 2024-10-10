@@ -142,7 +142,7 @@ body {
 }
 
 /* 반응형 디자인 */
-@media (max-width: 1200px) {
+@media (max-width: 900px) {
     #info-container,
     #memo-container {
         flex: 1;
