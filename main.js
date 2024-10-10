@@ -558,7 +558,6 @@ function setChampionToSlot(slot, championId) {
     });
 }
 
-// 챔피언 상세 정보 표시
 function displayChampionInfo(championId) {
     currentChampionId = championId;
     fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion/${championId}.json`)
@@ -601,7 +600,7 @@ function displayChampionInfo(championId) {
                         margin: '10px 0',
                         cursor: 'pointer' // 스킬 클릭 가능하도록 포인터로 변경
                     },
-                    click: () => insertSpellImageToEditor(spell.image.full, spell.name) // 클릭 시 이미지 삽입
+                    click: () => insertSpellEmbedToEditor(spell.name, spell.image.full, spellImg.width(), spellImg.height()) // 클릭 시 embed 삽입
                 });
 
                 const spellImg = $('<img>', {
@@ -629,7 +628,7 @@ function displayChampionInfo(championId) {
                     margin: '10px 0',
                     cursor: 'pointer' // 패시브 클릭 가능
                 },
-                click: () => insertSpellImageToEditor(`passive/${champion.passive.image.full}`, champion.passive.name) // 클릭 시 패시브 이미지 삽입
+                click: () => insertSpellEmbedToEditor(champion.passive.name, `passive/${champion.passive.image.full}`, passiveImg.width(), passiveImg.height()) // 클릭 시 패시브 이미지 embed 삽입
             });
 
             const passiveImg = $('<img>', {
@@ -652,6 +651,16 @@ function displayChampionInfo(championId) {
             console.error('챔피언 정보 로드 실패:', error);
         });
 }
+
+// embed 삽입 함수
+function insertSpellEmbedToEditor(spellName, spellImage) {
+    const embedCode = `<img src="https://ddragon.leagueoflegends.com/cdn/${version}/img/spell/${spellImage}" alt="${spellName}" width="64" height="64" style="object-fit: cover; border-radius: 4px; overflow: hidden;">`;
+    $('#editor').summernote('editor.pasteHTML', embedCode);
+}
+
+
+
+
 
 // 팀 슬롯 초기화 함수
 function initializeTeamSlots() {
@@ -1106,7 +1115,6 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
     const mySlotIndex = mySlotNumber - 1;
     const enemySlotIndex = enemySlotNumber - 1;
 
-    // 모달 생성
     const modal = $('<div>', {
         class: 'modal',
         id: 'compare-modal'
@@ -1129,16 +1137,20 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
     });
     const page1Button = $('<button>', { text: '스탯', click: () => showPage(1) });
     const page2Button = $('<button>', { text: '스킬쿨', click: () => showPage(2) });
-    pageNav.append(page1Button, page2Button);
+    const page3Button = $('<button>', { text: '스킬 사거리', click: () => showPage(3) });
+    pageNav.append(page1Button, page2Button, page3Button);
 
     // 페이지 컨텐츠 생성
     const page1 = $('<div>', { class: 'compare-page', id: 'compare-page-1' });
     const page2 = $('<div>', { class: 'compare-page', id: 'compare-page-2', css: { display: 'none' } });
+    const page3 = $('<div>', { class: 'compare-page', id: 'compare-page-3', css: { display: 'none' } });
 
     const statCanvas = $('<canvas>', { id: 'stat-comparison-chart', width: 400, height: 200 });
     const skillCanvas = $('<canvas>', { id: 'skill-comparison-chart', width: 400, height: 200 });
+    const rangeCanvas = $('<canvas>', { id: 'range-comparison-chart', width: 400, height: 200 });
     page1.append(statCanvas);
     page2.append(skillCanvas);
+    page3.append(rangeCanvas);
 
     // 슬롯에서 챔피언 ID 가져오기
     const myTeamContainer = $('#my-team').find('.team');
@@ -1149,11 +1161,6 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
 
     const myChampionId = mySlot.find('img').attr('alt');
     const enemyChampionId = enemySlot.find('img').attr('alt');
-
-    console.log('CompareSlots 호출됨');
-    console.log('My Champion ID:', myChampionId);
-    console.log('Enemy Champion ID:', enemyChampionId);
-
 
     if (!myChampionId || !enemyChampionId) {
         alert('비교할 챔피언이 선택되지 않았습니다.');
@@ -1170,27 +1177,15 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
     });
 
     Promise.all(championDataPromises).then(championsData => {
-        const allCooldowns = [];
-
-        championsData.forEach(champion => {
-            champion.spells.forEach(spell => {
-                allCooldowns.push(...spell.cooldown); // 스킬 쿨다운을 allCooldowns 배열에 추가
-            });
-        });
-
-        const maxCooldownValue = Math.max(...allCooldowns); // 최대 쿨다운 값 계산
-
         const statCtx = document.getElementById('stat-comparison-chart').getContext('2d');
         const skillCtx = document.getElementById('skill-comparison-chart').getContext('2d');
+        const rangeCtx = document.getElementById('range-comparison-chart').getContext('2d');
 
         const statLabels = ['공격력', '방어력', '체력', '마나', '이동속도'];
-        const skillLabels = ['레벨 1', '레벨 2', '레벨 3', '레벨 4', '레벨 5'];
+        const skillLabels = ['Q', 'W', 'E', 'R'];
+        const rangeLabels = ['Q', 'W', 'E', 'R'];
 
         // 스탯 데이터셋 생성
-		
-		
-		
-		
         const statDatasets = championsData.map((champion, index) => {
             return {
                 label: champion.name,
@@ -1201,100 +1196,125 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
                     champion.stats.mp,
                     champion.stats.movespeed
                 ],
-                backgroundColor: getColor(index, 0),
-                borderColor: getColor(index, 1),
+                backgroundColor: index === 0 ? 'rgba(255, 99, 132, 0.2)' : 'rgba(54, 162, 235, 0.2)',
+                borderColor: index === 0 ? 'rgba(255, 99, 132, 1)' : 'rgba(54, 162, 235, 1)',
                 borderWidth: 1
             };
         });
 
-        // 스킬 쿨다운 데이터셋 생성
-        const skillDatasets = championsData.map((champion, championIndex) => {
-            return champion.spells.map((spell, spellIndex) => {
-                return {
-                    label: `${champion.name} - ${spell.name}`,
-                    data: spell.cooldown.slice(0, 5), // 첫 5개의 레벨만 사용
-                    borderColor: getColor(championIndex, spellIndex),
-                    backgroundColor: 'rgba(0, 0, 0, 0)', // 배경을 투명하게 설정
-                    fill: false,
-                    borderWidth: 2
-                };
-            });
-        }).flat(); // 중첩된 배열을 평평하게 만듦
+        // 스킬 쿨타임 데이터셋 생성 (레벨별로 다르게 표시, 내 스킬과 적 스킬을 나란히 비교)
+        const skillDatasets = [];
+        const levels = ['레벨 1', '레벨 2', '레벨 3', '레벨 4', '레벨 5'];
 
-        // 스탯 비교 차트 생성
+        for (let i = 0; i < skillLabels.length; i++) {
+            skillDatasets.push(
+                {
+                    label: `${championsData[0].name} ${skillLabels[i]}`,
+                    data: championsData[0].spells[i].cooldown,
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: `${championsData[1].name} ${skillLabels[i]}`,
+                    data: championsData[1].spells[i].cooldown,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }
+            );
+        }
+
+        // 스킬 사거리 데이터셋 생성
+        const rangeDatasets = championsData.map((champion, index) => {
+            return {
+                label: champion.name,
+                data: champion.spells.map(spell => spell.rangeBurn),
+                backgroundColor: index === 0 ? 'rgba(153, 102, 255, 0.2)' : 'rgba(255, 206, 86, 0.2)',
+                borderColor: index === 0 ? 'rgba(153, 102, 255, 1)' : 'rgba(255, 206, 86, 1)',
+                borderWidth: 1
+            };
+        });
+
+        // 스탯 차트 생성
         new Chart(statCtx, {
-            type: 'bar',
+            type: 'radar',
             data: {
                 labels: statLabels,
                 datasets: statDatasets
+            },
+            options: {
+                scale: {
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // 스킬 쿨타임 차트 생성 (레벨별 데이터 포함, 내 스킬과 적 스킬을 나란히 비교, 간격 조정)
+        new Chart(skillCtx, {
+            type: 'bar',
+            data: {
+                labels: levels,
+                datasets: skillDatasets
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                // 막대의 간격 조정
+                categoryPercentage: 0.6, // 막대 그룹 간 간격 조정
+                barPercentage: 0.8 // 각 막대의 너비 조정
+            }
+        });
+
+        // 스킬 사거리 차트 생성
+        new Chart(rangeCtx, {
+            type: 'bar',
+            data: {
+                labels: rangeLabels,
+                datasets: rangeDatasets
             },
             options: {
                 scales: {
                     y: {
                         beginAtZero: true
                     }
-                },
-                plugins: {
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'top',
-                        formatter: function(value) {
-                            return value.toFixed(1); // 소수점 한 자리로 표시
-                        },
-                        color: '#000'
-                    }
                 }
             }
         });
-
-        // 스킬 쿨다운 비교 차트 생성
-		new Chart(skillCtx, {
-			type: 'bar', // 막대형 차트로 설정
-			data: {
-				labels: skillLabels,
-				datasets: skillDatasets // 데이터셋은 이미 준비된 상태입니다.
-			},
-			options: {
-				responsive: true,
-				plugins: {
-					legend: {
-						position: 'top', // 범례 위치
-					},
-					tooltip: {
-						mode: 'index',
-						intersect: true // 막대가 교차된 지점에서만 툴팁을 표시하도록 설정
-					}
-				},
-				scales: {
-					x: {
-						stacked: false // x축 스택을 해제하여 막대가 나란히 배치되도록 설정
-					},
-					y: {
-						beginAtZero: true // y축의 시작점을 0으로 설정
-					}
-				},
-				interaction: {
-					mode: 'nearest', // 가장 가까운 막대와 상호작용
-					axis: 'x', // x축 기준으로 상호작용
-					intersect: true // 교차된 부분에 대해서만 반응하도록 설정
-				},
-				barPercentage: 0.6, // 각 데이터셋의 막대 너비 비율 설정 (0~1 사이 값으로 조정 가능)
-				categoryPercentage: 0.8 // 그룹 내 막대들의 너비 비율 설정
-			}
-		});
-    }).catch(error => {
-        console.error('챔피언 데이터 로드 실패:', error);
-        alert('챔피언 데이터 로드에 실패했습니다.');
     });
 
-    // 모달을 화면에 추가 및 표시
-    modalContent.append(closeButton, pageNav, page1, page2);
+    // 모달 표시
+    modalContent.append(closeButton, pageNav, page1, page2, page3);
     modal.append(modalContent);
     $('body').append(modal);
     modal.show();
+
+    // 페이지 네비게이션 함수
+    function showPage(pageNumber) {
+        $('.compare-page').hide();
+        $(`#compare-page-${pageNumber}`).show();
+    }
 }
 
-// getColor 함수 추가
+
+
 // 스킬 인덱스에 따라 색상을 결정하는 함수
 function getColor(championIndex, spellIndex) {
     const baseColors = [
@@ -1329,13 +1349,7 @@ function showPage(pageNumber) {
     }
 }
 
-// Function to compare slots and show graph (already implemented above)
 
-    // This function is already implemented above.
-    // It's included here to ensure no duplication errors.
-
-
-// 드래그바 초기화 함수 (상하)
 // 드래그바 초기화 함수 (상하)
 function initializeHorizontalDrag() {
     const horizontalDivider = document.getElementById('horizontal-divider');
@@ -1411,9 +1425,6 @@ function initializeHorizontalDrag() {
 }
 
 
-// main.js
-
-// ... 기존 코드 ...
 
 // loadDataFromBase64 함수 수정
 function loadDataFromBase64(base64Data) {
