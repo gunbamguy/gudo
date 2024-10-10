@@ -685,3 +685,8 @@ body {
         display: none;
 }
 
+.vertical-divider-right {
+    width: 5px;
+    background-color: #ddd;
+    cursor: ew-resize;
+}
