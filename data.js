@@ -72,7 +72,7 @@ function saveMemo(championId, memo) {
     const transaction = db.transaction(['memos'], 'readwrite');
     const store = transaction.objectStore('memos');
     store.put({ championId: championId, memoContent: memo.memoContent });
-    alert('Memo saved.');
+    alert('챔프 메모 저장완료.');
 }
 
 // Load Memo
