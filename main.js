@@ -10,8 +10,8 @@ $(document).ready(function() {
             loadDataFromBase64(base64Data);
         }
     });
-	
-	$('#delete-memory-button').on('click', function() {
+
+    $('#delete-memory-button').on('click', function() {
         if (confirm('현재 챔프 데이터 삭제하시겠습니까?')) {
             deleteAllData();
             alert('챔프 데이터 삭제되었습니다.');
@@ -19,16 +19,15 @@ $(document).ready(function() {
             alert('삭제가 취소되었습니다.');
         }
     });
-	
-	
-	$('#editor').summernote({
+
+    $('#editor').summernote({
         height: 'auto',
         minHeight: 150,
         maxHeight: null,
         focus: true,
         lang: 'ko-KR',
         toolbar: [
-            ['insert', ['link', 'picture', 'youtubeLinkEditor1', 'customImage']], // 링크, 이미지, YouTube 링크, 커스텀 이미지 삽입 버튼 추가
+            ['insert', ['link', 'picture', 'youtubeLinkEditor1', 'customImage', 'skillQ', 'skillW', 'skillE', 'skillR']], // 스킬 버튼 추가
             ['style', ['style']],
             ['font', ['bold', 'italic', 'underline', 'clear']],
             ['fontname', ['fontname']],
@@ -50,27 +49,20 @@ $(document).ready(function() {
                             var embedUrl;
                             var startTime = '';
 
-                            // 시간 파라미터 추출 (예: ?t=211 또는 &t=211)
                             var timeMatch = url.match(/[?&]t=(\d+)/);
                             if (timeMatch) {
-                                startTime = '?start=' + timeMatch[1]; // 시간 파라미터를 추출하여 embed URL에 추가
+                                startTime = '?start=' + timeMatch[1];
                             }
-                           
-                            // 짧은 YouTube 링크 처리 (https://youtu.be/ 형식)
+
                             if (url.includes('https://youtu.be/')) {
-                                var videoId = url.split('https://youtu.be/')[1].split('?')[0]; // 비디오 ID 추출
+                                var videoId = url.split('https://youtu.be/')[1].split('?')[0];
                                 embedUrl = 'https://www.youtube.com/embed/' + videoId + startTime;
-                            }
-                            // 표준 YouTube 링크 처리 (https://www.youtube.com/watch?v= 형식 포함)
-                            else if (url.includes('https://www.youtube.com/watch?v=') || url.includes('https://youtube.com/watch?v=')) {
+                            } else if (url.includes('https://www.youtube.com/watch?v=')) {
                                 embedUrl = url.replace("watch?v=", "embed/") + startTime;
-                            }
-                            // YouTube Shorts 링크 처리 (https://www.youtube.com/shorts/ 형식 포함)
-                            else if (url.includes('https://www.youtube.com/shorts/') || url.includes('https://youtube.com/shorts/')) {
+                            } else if (url.includes('https://www.youtube.com/shorts/')) {
                                 embedUrl = url.replace("/shorts/", "/embed/") + startTime;
                             }
 
-                            // iframe을 Summernote 에디터에 삽입
                             var iframeTag = '<iframe width="560" height="315" src="' + embedUrl + '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
                             context.invoke('editor.pasteHTML', iframeTag);
                         }
@@ -82,18 +74,91 @@ $(document).ready(function() {
             customImage: function(context) {
                 var ui = $.summernote.ui;
                 var button = ui.button({
-                    contents: '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAACXElEQVR4nO2Yv6rqQBDG915uJ+SAhcFKUFiwCramMuAj+Ocd0mntI+wb5AHENJYWahebgJBKVFIECSYpLMKmPqcIiDfRHLOusZlftQybme9zd7JrEAIAAAAAAACAvHz/D6WULc9fvrKKh9GAqqrf+VFVla96xGygXq8X9lQ2/7hnzEZRlEqlwjFh0QZWqxXfhIwGTNPcbDYIoXa7fRuPosiyLEmSSqXSbTyebJomq863kWhTwzAQQoZhJOKP5sNrtPAe0HU9HvR6PS4JizbQ7/fjwe2+eoWiDfDSfQV64DkIIV9fX8vlkntmRgO2bd+NS5J094U4Go3YCv0KowFRFBNHVczd4BVBEOITDaVOQGYYDfi+z3Yzk2U5HvDqZsYm9jyP4SlBENjKZcC4Aq7rJiJRFMUD3/cRQpRSSqnrumEYOo5zPB6n0+krQh/x5x1JnyHR61EUiaLIkIe/AYzxYDCQZblarTYajURbB0Hged5+vz+dTuPxmHv1l8AYLxaL5/9hUkpnsxnG+NPCEUIIqapKKX1e/RXf94fD4YfVK4rCpv66FMzrwKcHDMNIH0xRFNm2fT6fwzCMI4Ig3G0MhJCu69eL6gdI/6iTySRjPiEkvZEKU3uHtIHs+Rjj9C5iK83nNhoEQeJjiW3b8/ncNM3tdns4HOIgxrjb7bZarU6nk8jw6HZYEOktkZd3fLTLR64TIIGmaR9WH6NpWt6XKaU0u92LBmNMCLEs61fdlmURQl6v+MbLnKIozWazXC7XarU44jjO5XLZ7Xbr9fp9dQEAAAAAAAAAAIBi+AESI/IlUWYc/gAAAABJRU5ErkJggg==" alt="Custom Image" width="20" height="20"/>',
-                    tooltip: 'Insert Custom Image',
+                    contents: '<span style="font-size: 13px;">평</span>',
+                    tooltip: 'Insert 평',
                     click: function() {
-                        // base64 이미지 데이터
-                        var imgTag = '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAACXElEQVR4nO2Yv6rqQBDG915uJ+SAhcFKUFiwCramMuAj+Ocd0mntI+wb5AHENJYWahebgJBKVFIECSYpLMKmPqcIiDfRHLOusZlftQybme9zd7JrEAIAAAAAAACAvHz/D6WULc9fvrKKh9GAqqrf+VFVla96xGygXq8X9lQ2/7hnzEZRlEqlwjFh0QZWqxXfhIwGTNPcbDYIoXa7fRuPosiyLEmSSqXSbTyebJomq863kWhTwzAQQoZhJOKP5sNrtPAe0HU9HvR6PS4JizbQ7/fjwe2+eoWiDfDSfQV64DkIIV9fX8vlkntmRgO2bd+NS5J094U4Go3YCv0KowFRFBNHVczd4BVBEOITDaVOQGYYDfi+z3Yzk2U5HvDqZsYm9jyP4SlBENjKZcC4Aq7rJiJRFMUD3/cRQpRSSqnrumEYOo5zPB6n0+krQh/x5x1JnyHR61EUiaLIkIe/AYzxYDCQZblarTYajURbB0Hged5+vz+dTuPxmHv1l8AYLxaL5/9hUkpnsxnG+NPCEUIIqapKKX1e/RXf94fD4YfVK4rCpv66FMzrwKcHDMNIH0xRFNm2fT6fwzCMI4Ig3G0MhJCu69eL6gdI/6iTySRjPiEkvZEKU3uHtIHs+Rjj9C5iK83nNhoEQeJjiW3b8/ncNM3tdns4HOIgxrjb7bZarU6nk8jw6HZYEOktkZd3fLTLR64TIIGmaR9WH6NpWt6XKaU0u92LBmNMCLEs61fdlmURQl6v+MbLnKIozWazXC7XarU44jjO5XLZ7Xbr9fp9dQEAAAAAAAAAAIBi+AESI/IlUWYc/gAAAABJRU5ErkJggg==" alt="Custom Image" width="64" height="64"/>';
-                        context.invoke('editor.pasteHTML', imgTag);
+                        var textTag = '<span style="font-size: 36px;">평</span><span style="font-size: inherit;">';
+                        context.invoke('editor.pasteHTML', textTag);
                     }
                 });
                 return button.render();
+            },
+            // 스킬 버튼 (Q, W, E, R)
+            skillQ: function(context) {
+                return createSkillButton(context, 'Q');
+            },
+            skillW: function(context) {
+                return createSkillButton(context, 'W');
+            },
+            skillE: function(context) {
+                return createSkillButton(context, 'E');
+            },
+            skillR: function(context) {
+                return createSkillButton(context, 'R');
             }
         }
     });
+
+    // 스킬 버튼 생성 함수
+    function createSkillButton(context, skillKey) {
+        var ui = $.summernote.ui;
+        var button = ui.button({
+            contents: `<span>${skillKey}</span>`,
+            tooltip: `Insert Skill ${skillKey}`,
+            click: function() {
+                const championId = currentChampionId; // 선택된 챔피언 ID를 가져옵니다.
+                if (!championId) {
+                    alert('챔피언이 선택되지 않았습니다.');
+                    return;
+                }
+                
+                fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion/${championId}.json`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const champion = data.data[championId];
+                        const skillIndex = ['Q', 'W', 'E', 'R'].indexOf(skillKey);
+                        if (skillIndex !== -1 && champion.spells[skillIndex]) {
+                            var skill = champion.spells[skillIndex];
+                            var imgUrl = `https://ddragon.leagueoflegends.com/cdn/${version}/img/spell/${skill.image.full}`;
+                            context.invoke('editor.pasteHTML', imgUrl); // 이미지 URL을 에디터에 삽입
+                        }
+                    })
+                    .catch(error => console.error('챔피언 데이터 로드 실패:', error));
+            }
+        });
+        return button.render();
+    }
+
+    // 스킬 버튼 생성 함수
+    function createSkillButton(context, skillKey) {
+        var ui = $.summernote.ui;
+        var button = ui.button({
+            contents: `<span>${skillKey}</span>`,
+            tooltip: `Insert Skill ${skillKey}`,
+            click: function() {
+                const championId = currentChampionId; // 선택된 챔피언 ID를 가져옵니다.
+                if (!championId) {
+                    alert('챔피언이 선택되지 않았습니다.');
+                    return;
+                }
+                
+                fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion/${championId}.json`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const champion = data.data[championId];
+                        const skillIndex = ['Q', 'W', 'E', 'R'].indexOf(skillKey);
+                        if (skillIndex !== -1 && champion.spells[skillIndex]) {
+                            var skill = champion.spells[skillIndex];
+                            var imgTag = `<img src="https://ddragon.leagueoflegends.com/cdn/${version}/img/spell/${skill.image.full}" alt="${skill.name}" style="width: 64px; height: 64px; object-fit: cover;"/>`;
+                            context.invoke('editor.pasteHTML', imgTag);
+                        }
+                    })
+                    .catch(error => console.error('챔피언 데이터 로드 실패:', error));
+            }
+        });
+        return button.render();
+    }
+
 
     // 두 번째 Summernote 에디터 초기화 (구도페이지 메모)
     $('#formation-editor').summernote({
