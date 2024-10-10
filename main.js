@@ -3,6 +3,83 @@
 // Editor Initialization and Event Handlers
 
 $(document).ready(function() {
+
+	// 스탯 내보내기 버튼 이벤트 핸들러 수정 (이동기, CC기 여부 표시 - 한국어 키워드 사용)
+	$('#copy-stats-button').on('click', function() {
+	    const myTeamContainer = $('#my-team').find('.team');
+	    const enemyTeamContainer = $('#enemy-team').find('.team');
+	
+	    let championsToFetch = [];
+	    let championStatsText = '';
+	
+	    // 내 팀 슬롯에 있는 챔피언 정보 수집
+	    myTeamContainer.children().each(function() {
+	        const championId = $(this).find('img').attr('alt');
+	        if (championId) {
+	            championsToFetch.push(championId);
+	        }
+	    });
+	
+	    // 상대 팀 슬롯에 있는 챔피언 정보 수집
+	    enemyTeamContainer.children().each(function() {
+	        const championId = $(this).find('img').attr('alt');
+	        if (championId) {
+	            championsToFetch.push(championId);
+	        }
+	    });
+	
+	    // 챔피언이 없다면 경고 메시지 출력
+	    if (championsToFetch.length === 0) {
+	        alert('양 팀에 선택된 챔피언이 없습니다.');
+	        return;
+	    }
+	
+	    // 챔피언 데이터 가져오기 및 클립보드에 복사
+	    Promise.all(championsToFetch.map(championId => {
+	        return fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion/${championId}.json`)
+	            .then(response => response.json())
+	            .then(data => {
+	                const champion = data.data[championId];
+	                let statsText = `챔피언: ${champion.name}\n`;
+	
+	                // 스킬 정보 추가 (쿨다운, 사거리, 이동기 여부, CC기 여부)
+	                champion.spells.forEach((spell, index) => {
+	                    const spellKey = getSpellKey(index);
+	                    const cooldown = spell.cooldownBurn;
+	                    const range = spell.rangeBurn || '알 수 없음';
+	                    const description = spell.description;
+	
+	                    // 이동기 여부 판단
+	                    const isMobility = /(돌진|점멸|도약|순간이동|점프)/.test(description) ? '이동기' : '';
+	
+	                    // CC기 여부 판단
+	                    const isCC = /(기절|속박|이동 불가|공중에 띄움|억제|침묵|공포|도발|수면|변이|둔화)/.test(description) ? 'CC기' : '';
+	
+	                    // 스킬 정보 텍스트 작성
+	                    statsText += `${spellKey}: 쿨다운 ${cooldown}초, 사거리 ${range}`;
+	                    if (isMobility) statsText += `, ${isMobility}`;
+	                    if (isCC) statsText += `, ${isCC}`;
+	                    statsText += `\n`;
+	                });
+	
+	                return statsText;
+	            });
+	    }))
+	    .then(statsArray => {
+	        championStatsText = statsArray.join('----------------------\n\n');
+	        // 클립보드에 복사
+	        navigator.clipboard.writeText(championStatsText).then(() => {
+	            alert('양 팀의 스킬 정보가 클립보드에 복사되었습니다.');
+	        }).catch(err => {
+	            console.error('클립보드 복사 실패:', err);
+	            alert('클립보드에 복사하는 중 오류가 발생했습니다.');
+	        });
+	    })
+	    .catch(error => {
+	        console.error('챔피언 정보 로드 실패:', error);
+	    });
+	});
+		
     // Event Listeners for the buttons
     $('#load-data-button').on('click', function() {
         const base64Data = prompt('불러올 데이터를 입력하세요:');
