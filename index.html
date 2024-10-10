@@ -166,6 +166,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
+    // 모바일 페이지가 로드될 때 스크롤을 맨 위로 이동시키는 코드
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.innerWidth <= 768) {
+            window.scrollTo(0, 0); // 모바일 환경에서 스크롤을 맨 위로 이동
+        }
+    });
+</script>
 
 
 </body>
