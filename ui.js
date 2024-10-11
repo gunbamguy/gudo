@@ -237,19 +237,19 @@ function displayChampionInfo(championId) {
             statsTable.append(`
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsattackdamageicon.png" alt="공격력 아이콘" width="20px"/> 공격력</th>
-                    <td>${champion.stats.attackdamage} (+${champion.stats.attackdamageperlevel} 레벨당)</td>
+                    <td>${champion.stats.attackdamage} (+${champion.stats.attackdamageperlevel} Lv+)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsarmoricon.png" alt="방어력 아이콘" width="20px"/> 방어력</th>
-                    <td>${champion.stats.armor} (+${champion.stats.armorperlevel} 레벨당)</td>
+                    <td>${champion.stats.armor} (+${champion.stats.armorperlevel} Lv+)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodshealthscalingicon.png" alt="체력 아이콘" width="20px"/> 체력</th>
-                    <td>${champion.stats.hp} (+${champion.stats.hpperlevel} 레벨당)</td>
+                    <td>${champion.stats.hp} (+${champion.stats.hpperlevel} Lv+)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsabilitypowericon.png" alt="마나 아이콘" width="20px"/> 마나</th>
-                    <td>${champion.stats.mp} (+${champion.stats.mpperlevel} 레벨당)</td>
+                    <td>${champion.stats.mp} (+${champion.stats.mpperlevel} Lv+)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsmovementspeedicon.png" alt="이동 속도 아이콘" width="20px"/> 이동 속도</th>
@@ -265,15 +265,15 @@ function displayChampionInfo(championId) {
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodshealthplusicon.png" alt="체력 재생 아이콘" width="20px"/> 체력 재생</th>
-                    <td>${champion.stats.hpregen} (+${champion.stats.hpregenperlevel} 레벨당)</td>
+                    <td>${champion.stats.hpregen} (+${champion.stats.hpregenperlevel} Lv+)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsmagicresicon.png" alt="마나 재생 아이콘" width="20px"/> 마나 재생</th>
-                    <td>${champion.stats.mpregen} (+${champion.stats.mpregenperlevel} 레벨당)</td>
+                    <td>${champion.stats.mpregen} (+${champion.stats.mpregenperlevel} Lv+)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodstenacityicon.png" alt="마법 저항력 아이콘" width="20px"/> 마법 저항력</th>
-                    <td>${champion.stats.spellblock} (+${champion.stats.spellblockperlevel} 레벨당)</td>
+                    <td>${champion.stats.spellblock} (+${champion.stats.spellblockperlevel} Lv+)</td>
                 </tr>
             `);
             infoDiv.append(statsTable);
