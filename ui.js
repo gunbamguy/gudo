@@ -714,36 +714,150 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
             }
         });
 
-        // 스킬 쿨타임 차트 생성 (레벨별 데이터 포함, 내 스킬과 적 스킬을 나란히 비교, 간격 조정)
-        new Chart(skillCtx, {
-            type: 'bar',
-            data: {
-                labels: levels,
-                datasets: skillDatasets
-            },
-            options: {
-                responsive: true,
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
-                plugins: {
-                    tooltip: {
-                        enabled: true,
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                },
-                // 막대의 간격 조정
-                categoryPercentage: 0.6, // 막대 그룹 간 간격 조정
-                barPercentage: 0.8 // 각 막대의 너비 조정
-            }
-        });
+
+		// 원래 데이터 세트를 바탕으로 데이터 위치를 조정하여 새로운 데이터셋 생성
+		let expandedSkillDatasets = []; // 초기화
+
+		for (let i = 0; i < skillDatasets.length; i += 2) {
+			// 첫 번째 챔피언 데이터 세트
+			expandedSkillDatasets.push(skillDatasets[i]);
+
+			// 빈 데이터를 넣지 않고 두 번째 챔피언 데이터 세트 추가
+			if (i + 1 < skillDatasets.length) {
+				expandedSkillDatasets.push(skillDatasets[i + 1]);
+			}
+
+			// 두 데이터 세트 사이에 새로 추가되는 빈칸이 아닌 데이터 세트 (더미 데이터)
+			expandedSkillDatasets.push({
+				label: '간격 데이터',
+				data: skillDatasets[i].data.map(() => null), // 간격을 주기 위해 빈 데이터 추가
+				backgroundColor: 'rgba(0, 0, 0, 0)', // 완전히 투명하게 설정
+				borderColor: 'rgba(0, 0, 0, 0)',
+				borderWidth: 0,
+				hoverBackgroundColor: 'rgba(0, 0, 0, 0)', // 호버 시에도 투명하게 유지
+				hoverBorderColor: 'rgba(0, 0, 0, 0)',
+				// 더미 데이터셋을 숨기기 위한 추가 설정 (필요 시)
+				// hidden: true, // 간격 유지에는 영향을 줄 수 있으므로 주석 처리
+			});
+		}
+
+				new Chart(skillCtx, {
+			type: 'bar',
+			data: {
+				labels: levels,
+				datasets: expandedSkillDatasets
+			},
+			options: {
+				responsive: true,
+				interaction: {
+					mode: 'index',
+					intersect: false
+				},
+				plugins: {
+					tooltip: {
+						enabled: true,
+						mode: 'index',
+						intersect: false,
+						callbacks: {
+							label: function(context) {
+								// '간격 데이터' 레이블을 가진 데이터셋은 빈 문자열 반환하여 툴팁에서 간격을 유지
+								if (context.dataset.label === '간격 데이터') {
+									return '';
+								}
+								return `${context.dataset.label}: ${context.raw}`;
+							}
+						},
+						backgroundColor: 'rgba(0, 0, 0, 0.8)',
+						titleFont: {
+							family: 'Arial, sans-serif',
+							size: 14,
+							weight: 'bold',
+							color: '#fff'
+						},
+						bodyFont: {
+							family: 'Arial, sans-serif',
+							size: 12,
+							color: '#fff'
+						},
+						padding: 10,
+						cornerRadius: 5
+					},
+					legend: {
+						display: true,
+						labels: {
+							filter: function(item, chart) {
+								return item.text !== '간격 데이터';
+							},
+							color: '#444',
+							font: {
+								family: 'Arial, sans-serif',
+								size: 12
+							}
+						}
+					}
+				},
+				scales: {
+					x: {
+						stacked: false,
+						grid: {
+							display: false
+						},
+						ticks: {
+							padding: 10,
+							color: '#444',
+							font: {
+								family: 'Arial, sans-serif',
+								size: 12
+							}
+						}
+					},
+					y: {
+						beginAtZero: true,
+						grid: {
+							color: 'rgba(200, 200, 200, 0.2)',
+							lineWidth: 1
+						},
+						ticks: {
+							color: '#444',
+							font: {
+								family: 'Arial, sans-serif',
+								size: 12
+							}
+						}
+					}
+				},
+				categoryPercentage: 0.8,
+				barPercentage: 1, // 그래프의 막대 두께를 조정합니다 (0에서 1 사이의 값, 1이 기본값)
+				animation: {
+					duration: 1500, // 애니메이션 지속 시간 (밀리초 단위)
+					easing: 'easeOutCubic' // 부드럽게 아래에서 위로 올라가는 애니메이션 효과
+				},
+				animations: {
+					y: {
+						from: 0 // y축 애니메이션의 시작 위치를 아래에서 시작하도록 설정
+					}
+				},
+				elements: {
+					bar: {
+						borderWidth: 2, // 막대 테두리 두께 설정
+						borderColor: 'rgba(0, 0, 0, 0.1)', // 막대 테두리 색상 및 투명도
+						borderSkipped: false, // 모든 면에 테두리를 적용
+						backgroundColor: (context) => {
+							const index = context.dataIndex;
+							const colors = [
+								'rgba(255, 99, 132, 0.7)',
+								'rgba(54, 162, 235, 0.7)',
+								'rgba(255, 206, 86, 0.7)',
+								'rgba(75, 192, 192, 0.7)',
+								'rgba(153, 102, 255, 0.7)',
+								'rgba(255, 159, 64, 0.7)'
+							];
+							return colors[index % colors.length];
+						}
+					}
+				}
+			}
+		});
 
         // 스킬 사거리 차트 생성
         new Chart(rangeCtx, {
