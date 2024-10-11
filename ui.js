@@ -260,11 +260,11 @@ function displayChampionInfo(championId) {
                     <td>${champion.stats.attackspeedperlevel}%</td>
                 </tr>
                 <tr>
-                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodshealthregenicon.png" alt="체력 재생 아이콘" width="20px"/> 체력 재생</th>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodshealthplusicon.png" alt="체력 재생 아이콘" width="20px"/> 체력 재생</th>
                     <td>${champion.stats.hpregen} (+${champion.stats.hpregenperlevel} per level)</td>
                 </tr>
                 <tr>
-                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsmanaregenicon.png" alt="마나 재생 아이콘" width="20px"/> 마나 재생</th>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsmagicresicon.png" alt="마나 재생 아이콘" width="20px"/> 마나 재생</th>
                     <td>${champion.stats.mpregen} (+${champion.stats.mpregenperlevel} per level)</td>
                 </tr>
                 <tr>
