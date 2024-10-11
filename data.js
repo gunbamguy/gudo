@@ -389,7 +389,8 @@ function exportDataAsUrl() {
         enemyTeam: [],
         formationMemo: $('#formation-editor').summernote('code'),
         memoContent: $('#editor').summernote('code'),
-        formationMemos: formationMemos
+        formationMemos: formationMemos,
+        championMemos: {}  // 챔피언 메모 데이터 추가
     };
 
     // 내 팀 데이터 수집
@@ -408,22 +409,43 @@ function exportDataAsUrl() {
         data.enemyTeam.push(img.length > 0 ? img.attr('alt') : null);
     }
 
-    // JSON 문자열을 Base64로 인코딩
-    const jsonStr = JSON.stringify(data);
-    const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
+    // IndexedDB에서 모든 챔피언 메모 가져오기
+    if (!db) {
+        alert('데이터베이스가 초기화되지 않았습니다.');
+        return;
+    }
 
-    // 현재 URL에서 기존 쿼리 파라미터 제거
-    const currentUrl = window.location.href.split('?')[0];
-    // 새 URL 생성 (예: https://example.com/page.html?data=base64String)
-    const newUrl = `${currentUrl}?data=${encodeURIComponent(base64Str)}`;
+    const transaction = db.transaction(['memos'], 'readonly');
+    const store = transaction.objectStore('memos');
+    const request = store.getAll();
 
-    // 클립보드에 URL 복사
-    navigator.clipboard.writeText(newUrl).then(() => {
-        alert('주소가 클립보드에 복사되었습니다.');
-    }).catch(err => {
-        console.error('클립보드 복사 실패:', err);
-        alert('주소 복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
-    });
+    request.onsuccess = function() {
+        request.result.forEach(record => {
+            data.championMemos[record.championId] = record.memoContent;
+        });
+
+        // JSON 문자열을 Base64로 인코딩
+        const jsonStr = JSON.stringify(data);
+        const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
+
+        // 현재 URL에서 기존 쿼리 파라미터 제거
+        const currentUrl = window.location.href.split('?')[0];
+        // 새 URL 생성
+        const newUrl = `${currentUrl}?data=${encodeURIComponent(base64Str)}`;
+
+        // 클립보드에 URL 복사
+        navigator.clipboard.writeText(newUrl).then(() => {
+            alert('주소가 클립보드에 복사되었습니다.');
+        }).catch(err => {
+            console.error('클립보드 복사 실패:', err);
+            alert('주소 복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
+        });
+    };
+
+    request.onerror = function(event) {
+        console.error('챔피언 메모 가져오기 실패:', event.target.error);
+        alert('챔피언 메모 가져오기에 실패했습니다.');
+    };
 }
 
 
