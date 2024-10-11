@@ -742,122 +742,139 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
 		}
 
 				new Chart(skillCtx, {
-			type: 'bar',
-			data: {
-				labels: levels,
-				datasets: expandedSkillDatasets
-			},
-			options: {
-				responsive: true,
-				interaction: {
-					mode: 'index',
-					intersect: false
-				},
-				plugins: {
-					tooltip: {
-						enabled: true,
-						mode: 'index',
-						intersect: false,
-						callbacks: {
-							label: function(context) {
-								// '간격 데이터' 레이블을 가진 데이터셋은 빈 문자열 반환하여 툴팁에서 간격을 유지
-								if (context.dataset.label === '간격 데이터') {
-									return '';
-								}
-								return `${context.dataset.label}: ${context.raw}`;
-							}
-						},
-						backgroundColor: 'rgba(0, 0, 0, 0.8)',
-						titleFont: {
-							family: 'Arial, sans-serif',
-							size: 14,
-							weight: 'bold',
-							color: '#fff'
-						},
-						bodyFont: {
-							family: 'Arial, sans-serif',
-							size: 12,
-							color: '#fff'
-						},
-						padding: 10,
-						cornerRadius: 5
-					},
-					legend: {
-						display: true,
-						labels: {
-							filter: function(item, chart) {
-								return item.text !== '간격 데이터';
-							},
-							color: '#444',
-							font: {
-								family: 'Arial, sans-serif',
-								size: 12
-							}
-						}
-					}
-				},
-				scales: {
-					x: {
-						stacked: false,
-						grid: {
-							display: false
-						},
-						ticks: {
-							padding: 10,
-							color: '#444',
-							font: {
-								family: 'Arial, sans-serif',
-								size: 12
-							}
-						}
-					},
-					y: {
-						beginAtZero: true,
-						grid: {
-							color: 'rgba(200, 200, 200, 0.2)',
-							lineWidth: 1
-						},
-						ticks: {
-							color: '#444',
-							font: {
-								family: 'Arial, sans-serif',
-								size: 12
-							}
-						}
-					}
-				},
-				categoryPercentage: 0.8,
-				barPercentage: 1, // 그래프의 막대 두께를 조정합니다 (0에서 1 사이의 값, 1이 기본값)
-				animation: {
-					duration: 1500, // 애니메이션 지속 시간 (밀리초 단위)
-					easing: 'easeOutCubic' // 부드럽게 아래에서 위로 올라가는 애니메이션 효과
-				},
-				animations: {
-					y: {
-						from: 0 // y축 애니메이션의 시작 위치를 아래에서 시작하도록 설정
-					}
-				},
-				elements: {
-					bar: {
-						borderWidth: 2, // 막대 테두리 두께 설정
-						borderColor: 'rgba(0, 0, 0, 0.1)', // 막대 테두리 색상 및 투명도
-						borderSkipped: false, // 모든 면에 테두리를 적용
-						backgroundColor: (context) => {
-							const index = context.dataIndex;
-							const colors = [
-								'rgba(255, 99, 132, 0.7)',
-								'rgba(54, 162, 235, 0.7)',
-								'rgba(255, 206, 86, 0.7)',
-								'rgba(75, 192, 192, 0.7)',
-								'rgba(153, 102, 255, 0.7)',
-								'rgba(255, 159, 64, 0.7)'
-							];
-							return colors[index % colors.length];
-						}
-					}
-				}
-			}
-		});
+    type: 'bar',
+    data: {
+        labels: levels,
+        datasets: expandedSkillDatasets
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        aspectRatio: 0.5, // 차트의 높이를 늘리기 위해 비율을 낮게 설정
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
+        plugins: {
+            tooltip: {
+                enabled: true,
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: function(context) {
+                        if (context.dataset.label === '간격 데이터') {
+                            return '';
+                        }
+                        return `${context.dataset.label}: ${context.raw}`;
+                    }
+                },
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleFont: {
+                    family: 'Arial, sans-serif',
+                    size: 14,
+                    weight: 'bold',
+                    color: '#fff'
+                },
+                bodyFont: {
+                    family: 'Arial, sans-serif',
+                    size: 12,
+                    color: '#fff'
+                },
+                padding: 10,
+                cornerRadius: 5
+            },
+            legend: {
+                display: true,
+                labels: {
+                    filter: function(item, chart) {
+                        return item.text !== '간격 데이터';
+                    },
+                    color: '#444',
+                    font: {
+                        family: 'Arial, sans-serif',
+                        size: 12
+                    }
+                }
+            },
+            // dataLabels 플러그인 추가
+            datalabels: {
+                color: '#444', // 숫자 색상
+                anchor: 'end',
+                align: 'start',
+                offset: -20, // 숫자 위치 조정
+                font: {
+                    size: 15, // 숫자 크기
+                    family: 'Arial, sans-serif'
+                },
+                formatter: function(value) {
+                    return value !== null ? value : ''; // 숫자 표시
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: false,
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    padding: 10,
+                    color: '#444',
+                    font: {
+                        family: 'Arial, sans-serif',
+                        size: 12
+                    }
+                }
+            },
+            y: {
+                type: 'logarithmic', // 로그 스케일 적용
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(200, 200, 200, 0.2)',
+                    lineWidth: 1
+                },
+                ticks: {
+                    callback: function(value) {
+                        return value === 1 ? '1' : Number(value).toLocaleString();
+                    },
+                    color: '#444',
+                    font: {
+                        family: 'Arial, sans-serif',
+                        size: 12
+                    }
+                }
+            }
+        },
+        categoryPercentage: 1.0, // 카테고리 전체를 차지하게 설정 (간격을 좁힘)
+        barPercentage: 1.0,      // 막대 두께를 최대화 (두껍게)
+        animation: {
+            duration: 1000,
+            easing: 'easeOutBounce'
+        },
+        elements: {
+            bar: {
+                borderWidth: 2,
+                borderColor: 'rgba(0, 0, 0, 0.1)',
+                borderSkipped: false,
+                backgroundColor: (context) => {
+                    const index = context.dataIndex;
+                    const colors = [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)'
+                    ];
+                    return colors[index % colors.length];
+                }
+            }
+        }
+    },
+    plugins: [ChartDataLabels] // Chart.js Data Labels 플러그인 사용
+});
+
+
 
         // 스킬 사거리 차트 생성
         new Chart(rangeCtx, {
@@ -980,16 +997,6 @@ function initializeHorizontalDrag() {
         isDragging = false;
     });
 }
-
-
-
-
-// main.js
-
-// ... 기존 코드 ...
-
-// loadDataFromBase64 함수 수정
-
 
 
 
