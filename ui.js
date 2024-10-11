@@ -201,7 +201,6 @@ function setChampionToSlot(slot, championId) {
     });
 }
 
-// 챔피언 정보 표시
 function displayChampionInfo(championId) {
     currentChampionId = championId;
     fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion/${championId}.json`)
@@ -338,6 +337,22 @@ $('<style>').prop('type', 'text/css').html(`
     }
 `).appendTo('head');
 
+// 스킬 키(Q, W, E, R)를 반환하는 함수
+function getSpellKey(index) {
+    switch (index) {
+        case 0:
+            return 'Q';
+        case 1:
+            return 'W';
+        case 2:
+            return 'E';
+        case 3:
+            return 'R';
+        default:
+            return '';
+    }
+}
+
 
 
 
@@ -450,20 +465,24 @@ function addSlots() {
 }
 
 // 챔피언을 슬롯에 설정하는 함수
+// Set Champion to Slot
 function setChampionToSlot(slot, championId) {
     $(slot).empty();
     const img = $('<img>', {
         src: `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${championId}.png`,
         alt: championId,
-        css: { 
-            width: '100%', 
-            height: '100%', 
-            objectFit: 'cover', 
-            borderRadius: '4px' 
+        css: {
+            width: '100%',  // 슬롯 안에서 이미지가 잘리는 것을 방지하기 위해 95%로 설정
+            height: '100%', // 슬롯 안에서 이미지가 잘리는 것을 방지하기 위해 95%로 설정
+            objectFit: 'cover',
+            borderRadius: '4px',
+            marginTop: '0px', // 이미지가 위로 5px 이동하도록 설정
+            marginBottom: '5px' // 이미지의 아래쪽 여백을 설정하여 충분한 공간을 확보
         }
     });
     $(slot).append(img);
 }
+
 
 // 비교 버튼 추가 함수
 function addComparisonButton(mySlotNumber, enemySlotNumber) {
@@ -842,17 +861,6 @@ function initializeHorizontalDrag() {
         isDragging = false;
     });
 }
-
-
-
-
-// main.js
-
-// ... 기존 코드 ...
-
-// loadDataFromBase64 함수 수정
-
-
 
 
 function generateExportData() {
