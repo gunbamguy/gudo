@@ -237,19 +237,19 @@ function displayChampionInfo(championId) {
             statsTable.append(`
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsattackdamageicon.png" alt="공격력 아이콘" width="20px"/> 공격력</th>
-                    <td>${champion.stats.attackdamage}</td>
+                    <td>${champion.stats.attackdamage} (+${champion.stats.attackdamageperlevel} 레벨당)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsarmoricon.png" alt="방어력 아이콘" width="20px"/> 방어력</th>
-                    <td>${champion.stats.armor}</td>
+                    <td>${champion.stats.armor} (+${champion.stats.armorperlevel} 레벨당)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodshealthscalingicon.png" alt="체력 아이콘" width="20px"/> 체력</th>
-                    <td>${champion.stats.hp}</td>
+                    <td>${champion.stats.hp} (+${champion.stats.hpperlevel} 레벨당)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsabilitypowericon.png" alt="마나 아이콘" width="20px"/> 마나</th>
-                    <td>${champion.stats.mp}</td>
+                    <td>${champion.stats.mp} (+${champion.stats.mpperlevel} 레벨당)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsmovementspeedicon.png" alt="이동 속도 아이콘" width="20px"/> 이동 속도</th>
@@ -260,21 +260,25 @@ function displayChampionInfo(championId) {
                     <td>${champion.stats.attackspeedperlevel}%</td>
                 </tr>
                 <tr>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsadaptiveforceicon.png" alt="공격 범위 아이콘" width="20px"/> 공격 범위</th>
+                    <td>${champion.stats.attackrange}</td>
+                </tr>
+                <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodshealthplusicon.png" alt="체력 재생 아이콘" width="20px"/> 체력 재생</th>
-                    <td>${champion.stats.hpregen} (+${champion.stats.hpregenperlevel} per level)</td>
+                    <td>${champion.stats.hpregen} (+${champion.stats.hpregenperlevel} 레벨당)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsmagicresicon.png" alt="마나 재생 아이콘" width="20px"/> 마나 재생</th>
-                    <td>${champion.stats.mpregen} (+${champion.stats.mpregenperlevel} per level)</td>
+                    <td>${champion.stats.mpregen} (+${champion.stats.mpregenperlevel} 레벨당)</td>
                 </tr>
                 <tr>
                     <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodstenacityicon.png" alt="마법 저항력 아이콘" width="20px"/> 마법 저항력</th>
-                    <td>${champion.stats.spellblock} (+${champion.stats.spellblockperlevel} per level)</td>
+                    <td>${champion.stats.spellblock} (+${champion.stats.spellblockperlevel} 레벨당)</td>
                 </tr>
             `);
             infoDiv.append(statsTable);
 
-            // 스킬 정보 추가
+            // 스킬 정보 추가 (스킬 사거리 포함)
             const spellsDiv = $('<div>', { class: 'champion-spells', css: { marginTop: '20px', color: '#ffffff' } });
             spellsDiv.append('<h4>스킬 정보</h4>');
             champion.spells.forEach(spell => {
@@ -283,6 +287,7 @@ function displayChampionInfo(championId) {
                         <h5>${spell.name}</h5>
                         <p>${spell.description}</p>
                         <p><strong><img src="https://ddragon.leagueoflegends.com/cdn/${version}/img/spell/${spell.id}.png" alt="쿨다운 아이콘" width="20px"/> 쿨다운:</strong> ${spell.cooldown.join(', ')}</p>
+                        <p><strong>사거리:</strong> ${spell.rangeBurn}</p>
                     </div>
                 `);
             });
