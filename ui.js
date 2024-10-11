@@ -746,8 +746,8 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
                         color: '#444', // 숫자 색상
                         anchor: 'center',
                         align: 'start',
-						offset: -100, // 막대에서 떨어진 위치
-                        offset: function(context) {
+			padding: 10,
+			offset: function(context) {
                             // 동일한 값이 겹치지 않도록 오프셋을 조정합니다.
                             const index = context.dataIndex;
                             return index % 2 === 0 ? -50 : 50;
@@ -779,7 +779,7 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
                     y: {
                         type: 'logarithmic', // 로그 스케일 적용
                         min: 1,
-                        max: 300,
+                        max: 250,
                         grid: {
                             color: 'rgba(200, 200, 200, 0.2)',
                             lineWidth: 1
