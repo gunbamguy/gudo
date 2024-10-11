@@ -211,6 +211,11 @@ function displayChampionInfo(championId) {
             const infoDiv = $('#champion-info');
             infoDiv.empty();
 
+            if (!champion) {
+                console.error('챔피언 데이터가 존재하지 않습니다.');
+                return;
+            }
+
             // 챔피언 이미지
             const img = $('<img>', {
                 src: `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${championId}_0.jpg`,
@@ -225,102 +230,113 @@ function displayChampionInfo(championId) {
             infoDiv.append(img);
 
             // 기본 스펙
-            const statsDiv = $('<div>').html(`
-                <h3>기본 스펙</h3>
-                <p>공격력: ${champion.stats.attackdamage}</p>
-                <p>방어력: ${champion.stats.armor}</p>
-                <p>체력: ${champion.stats.hp}</p>
-                <p>마나: ${champion.stats.mp}</p>
-                <p>이동 속도: ${champion.stats.movespeed}</p>
+            const statsTable = $('<table>', { class: 'table table-bordered stats-table' });
+            statsTable.append(`
+                <tr>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsattackdamageicon.png" alt="공격력 아이콘" width="20px"/> 공격력</th>
+                    <td>${champion.stats.attackdamage}</td>
+                </tr>
+                <tr>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsarmoricon.png" alt="방어력 아이콘" width="20px"/> 방어력</th>
+                    <td>${champion.stats.armor}</td>
+                </tr>
+                <tr>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodshealthscalingicon.png" alt="체력 아이콘" width="20px"/> 체력</th>
+                    <td>${champion.stats.hp}</td>
+                </tr>
+                <tr>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsabilitypowericon.png" alt="마나 아이콘" width="20px"/> 마나</th>
+                    <td>${champion.stats.mp}</td>
+                </tr>
+                <tr>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsmovementspeedicon.png" alt="이동 속도 아이콘" width="20px"/> 이동 속도</th>
+                    <td>${champion.stats.movespeed}</td>
+                </tr>
+                <tr>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsattackspeedicon.png" alt="공격 속도 증가 아이콘" width="20px"/> 공격 속도 증가</th>
+                    <td>${champion.stats.attackspeedperlevel}%</td>
+                </tr>
+                <tr>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodshealthregenicon.png" alt="체력 재생 아이콘" width="20px"/> 체력 재생</th>
+                    <td>${champion.stats.hpregen} (+${champion.stats.hpregenperlevel} per level)</td>
+                </tr>
+                <tr>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodsmanaregenicon.png" alt="마나 재생 아이콘" width="20px"/> 마나 재생</th>
+                    <td>${champion.stats.mpregen} (+${champion.stats.mpregenperlevel} per level)</td>
+                </tr>
+                <tr>
+                    <th><img src="https://raw.communitydragon.org/latest/game/assets/perks/statmods/statmodstenacityicon.png" alt="마법 저항력 아이콘" width="20px"/> 마법 저항력</th>
+                    <td>${champion.stats.spellblock} (+${champion.stats.spellblockperlevel} per level)</td>
+                </tr>
             `);
-            infoDiv.append(statsDiv);
+            infoDiv.append(statsTable);
 
-            // 스킬 정보 (쿨다운, 사거리, 데미지)
-            champion.spells.forEach((spell, index) => {
-                const spellDiv = $('<div>', {
-                    css: {
-                        display: 'flex',
-                        alignItems: 'center',
-                        margin: '10px 0',
-                        cursor: 'pointer'
-                    },
-                    click: () => insertSpellEmbedToEditor(spell.name, spell.image.full)
-                });
-
-                const spellImg = $('<img>', {
-                    src: `https://ddragon.leagueoflegends.com/cdn/${version}/img/spell/${spell.image.full}`,
-                    alt: spell.name,
-                    css: {
-                        width: '50px',
-                        height: '50px',
-                        marginRight: '10px'
-                    }
-                });
-                spellDiv.append(spellImg);
-
-                // 스킬 데미지 처리
-                let damageText = '없음'; // 기본값
-                if (spell.effectBurn && spell.effectBurn.length > 0) {
-                    damageText = spell.effectBurn.join(' / '); // 각 레벨별 데미지를 '/'로 구분
-                }
-
-                const spellDesc = $('<div>').html(`
-                    <strong>${spell.name} (${getSpellKey(index)})</strong>: ${spell.description} <br>
-                    쿨다운: ${spell.cooldownBurn} 초 <br>
-                    사거리: ${spell.rangeBurn || '알 수 없음'} <br>
+            // 스킬 정보 추가
+            const spellsDiv = $('<div>', { class: 'champion-spells', css: { marginTop: '20px', color: '#ffffff' } });
+            spellsDiv.append('<h4>스킬 정보</h4>');
+            champion.spells.forEach(spell => {
+                spellsDiv.append(`
+                    <div class="spell">
+                        <h5>${spell.name}</h5>
+                        <p>${spell.description}</p>
+                        <p><strong><img src="https://ddragon.leagueoflegends.com/cdn/${version}/img/spell/${spell.id}.png" alt="쿨다운 아이콘" width="20px"/> 쿨다운:</strong> ${spell.cooldown.join(', ')}</p>
+                    </div>
                 `);
-                spellDiv.append(spellDesc);
-
-                infoDiv.append(spellDiv);
             });
+            infoDiv.append(spellsDiv);
 
-            // 패시브 스킬
-            const passiveDiv = $('<div>', {
-                css: {
-                    display: 'flex',
-                    alignItems: 'center',
-                    margin: '10px 0',
-                    cursor: 'pointer'
-                },
-                click: () => insertSpellEmbedToEditor(champion.passive.name, `passive/${champion.passive.image.full}`)
-            });
-
-            const passiveImg = $('<img>', {
-                src: `https://ddragon.leagueoflegends.com/cdn/${version}/img/passive/${champion.passive.image.full}`,
-                alt: champion.passive.name,
-                css: {
-                    width: '50px',
-                    height: '50px',
-                    marginRight: '10px'
-                }
-            });
-            passiveDiv.append(passiveImg);
-
-            const passiveDesc = $('<div>').html(`<strong>${champion.passive.name}</strong>: ${champion.passive.description}`);
-            passiveDiv.append(passiveDesc);
-
-            infoDiv.append(passiveDiv);
+            // 챔피언 설명 추가
+            const loreDiv = $('<div>', { class: 'champion-lore', css: { marginTop: '20px', color: '#ffffff' } });
+            loreDiv.append(`<h4>챔피언 설명</h4><p>${champion.lore}</p>`);
+            infoDiv.append(loreDiv);
         })
         .catch(error => {
             console.error('챔피언 정보 로드 실패:', error);
         });
 }
 
-// 스킬 키(Q, W, E, R)를 반환하는 함수
-function getSpellKey(index) {
-    switch (index) {
-        case 0:
-            return 'Q';
-        case 1:
-            return 'W';
-        case 2:
-            return 'E';
-        case 3:
-            return 'R';
-        default:
-            return '';
+// CSS 적용
+$('<style>').prop('type', 'text/css').html(`
+    .stats-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #1c1c1c;
+        color: #ffffff;
+        margin-top: 20px;
+        border: 1px solid #444;
     }
-}
+    .stats-table th, .stats-table td {
+        border: 1px solid #444;
+        padding: 10px;
+        text-align: left;
+    }
+    .stats-table th {
+        background-color: #333;
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    .stats-table td {
+        background-color: #2b2b2b;
+    }
+    .stats-table tr:nth-child(even) {
+        background-color: #242424;
+    }
+    .champion-lore {
+        background-color: #1c1c1c;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #444;
+    }
+    .champion-spells {
+        background-color: #1c1c1c;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #444;
+    }
+    .spell {
+        margin-bottom: 15px;
+    }
+`).appendTo('head');
 
 
 
