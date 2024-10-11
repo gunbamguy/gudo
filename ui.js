@@ -268,7 +268,6 @@ function displayChampionInfo(championId) {
                     <strong>${spell.name} (${getSpellKey(index)})</strong>: ${spell.description} <br>
                     쿨다운: ${spell.cooldownBurn} 초 <br>
                     사거리: ${spell.rangeBurn || '알 수 없음'} <br>
-                    데미지: ${damageText}
                 `);
                 spellDiv.append(spellDesc);
 
