@@ -185,14 +185,6 @@ $('#copy-stats-button').on('click', function() {
 
 });
 
-
-
-
-
-
-
-
-
 dbRequest.onerror = function(event) {
     console.error('IndexedDB Error:', event);
 };
@@ -276,14 +268,23 @@ function loadMemo(championId, callback) {
 
 // Save Formation
 function saveFormation() {
-    const myTeamFirstSlot = $('#my-team').find('.team').children().eq(0);
-    const enemyTeamFirstSlot = $('#enemy-team').find('.team').children().eq(0);
+    const myTeamContainer = $('#my-team').find('.team');
+    const enemyTeamContainer = $('#enemy-team').find('.team');
 
-    const myChampionId = myTeamFirstSlot.find('img').attr('alt');
-    const enemyChampionId = enemyTeamFirstSlot.find('img').attr('alt');
+    const myChampionIds = [];
+    myTeamContainer.children().each(function() {
+        const champId = $(this).find('img').attr('alt');
+        if (champId) myChampionIds.push(champId);
+    });
 
-    if (myChampionId && enemyChampionId) {
-        const key = `${myChampionId}-${enemyChampionId}`;
+    const enemyChampionIds = [];
+    enemyTeamContainer.children().each(function() {
+        const champId = $(this).find('img').attr('alt');
+        if (champId) enemyChampionIds.push(champId);
+    });
+
+    if (myChampionIds.length > 0 && enemyChampionIds.length > 0) {
+        const key = `my:${myChampionIds.join('-')}_enemy:${enemyChampionIds.join('-')}`;
         const memoContent = $('#formation-editor').summernote('code');
 
         formationMemos[key] = memoContent;
@@ -298,28 +299,40 @@ function saveFormation() {
         store.put({ key: key, memoContent: memoContent });
 
         transaction.oncomplete = function() {
-            alert('저장 완료.');
+            alert('구도 저장이 완료되었습니다.');
         };
 
         transaction.onerror = function(event) {
             console.error('Error saving formation:', event.target.error);
-            alert('Failed to save formation.');
+            alert('구도 저장에 실패했습니다.');
         };
     } else {
-        alert('양쪽 챔프를 선택해야 구도 저장됩니다..');
+        alert('양쪽 팀에 최소 하나 이상의 챔피언을 선택해야 구도를 저장할 수 있습니다.');
     }
 }
 
+
 // Update Formation Memo
-function checkAndUpdateFormationMemo() {
-    const myTeamFirstSlot = $('#my-team').find('.team').children().eq(0);
-    const enemyTeamFirstSlot = $('#enemy-team').find('.team').children().eq(0);
 
-    const myChampionId = myTeamFirstSlot.find('img').attr('alt');
-    const enemyChampionId = enemyTeamFirstSlot.find('img').attr('alt');
+// checkAndUpdateFormationMemo 함수 수정
+function checkAndUpdateFormationMemo(clickedSlot) {
+    const myTeamContainer = $('#my-team').find('.team');
+    const enemyTeamContainer = $('#enemy-team').find('.team');
 
-    if (myChampionId && enemyChampionId) {
-        const key = `${myChampionId}-${enemyChampionId}`;
+    const myChampionIds = [];
+    myTeamContainer.children().each(function() {
+        const champId = $(this).find('img').attr('alt');
+        if (champId) myChampionIds.push(champId);
+    });
+
+    const enemyChampionIds = [];
+    enemyTeamContainer.children().each(function() {
+        const champId = $(this).find('img').attr('alt');
+        if (champId) enemyChampionIds.push(champId);
+    });
+
+    if (myChampionIds.length > 0 && enemyChampionIds.length > 0) {
+        const key = `my:${myChampionIds.join('-')}_enemy:${enemyChampionIds.join('-')}`;
         if (formationMemos[key]) {
             $('#formation-editor').summernote('code', formationMemos[key]);
         } else {
@@ -328,7 +341,7 @@ function checkAndUpdateFormationMemo() {
     }
 }
 
-// Export Data
+// main.js 내 - Export Data
 function exportData() {
     const data = {
         version: version,
@@ -400,6 +413,7 @@ function exportData() {
         alert('챔피언 메모 내보내기에 실패했습니다.');
     };
 }
+
 
 // Import Data
 function importData(event) {
@@ -573,7 +587,7 @@ function exportDataAsUrl() {
         formationMemo: $('#formation-editor').summernote('code'),
         memoContent: $('#editor').summernote('code'),
         formationMemos: formationMemos,
-        championMemos: {}  // 챔피언 메모 데이터 추가
+        championMemos: {}
     };
 
     // 내 팀 데이터 수집
@@ -630,6 +644,7 @@ function exportDataAsUrl() {
         alert('챔피언 메모 가져오기에 실패했습니다.');
     };
 }
+
 
 
 // Load Data from Base64

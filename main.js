@@ -311,6 +311,7 @@ $(document).ready(function() {
 });
 
 // 모든 메모리와 인덱스 데이터베이스 삭제 함수
+// main.js 내
 function deleteAllData() {
     // 일반 메모 삭제
     $('#editor').summernote('code', '');
@@ -331,4 +332,5 @@ function deleteAllData() {
         formationsStore.clear();
     }
 }
+
 

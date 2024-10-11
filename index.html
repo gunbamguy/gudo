@@ -190,6 +190,14 @@ $('#clear-editors-button').on('click', function() {
 });
 </script>
 
+
+<script>
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        document.querySelectorAll('#container, #horizontal-divider, .split-section, #info-container, #main-container, #memo-container, .divider, #vertical-divider-left, #vertical-divider-right, #formation-container, #champion-list button, .slot, .compare-btn, .modal, .modal-content, .note-editor .note-editable, .compare-page, .comparison-table th, .comparison-table td')
+            .forEach(container => container.classList.toggle('dark-mode'));
+    }
+</script>
 </body>
 
 </html>

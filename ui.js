@@ -160,6 +160,7 @@ function selectChampion(championId) {
 }
 
 // Set Champion to Slot
+// ui.js 내, setChampionToSlot 함수 수정
 function setChampionToSlot(slot, championId) {
     $(slot).empty();
     const img = $('<img>', {
@@ -189,6 +190,7 @@ function setChampionToSlot(slot, championId) {
                     enableMemo(championId);
                 }
                 clickTimeout = null;
+                checkAndUpdateFormationMemo(); // 추가: 슬롯 클릭 시 구도 메모 업데이트
             }, 300);
         }
 
@@ -200,6 +202,8 @@ function setChampionToSlot(slot, championId) {
         }
     });
 }
+
+
 
 function displayChampionInfo(championId) {
     currentChampionId = championId;
@@ -429,6 +433,7 @@ function handleSlotClick(event, slot) {
             displayChampionInfo(championId);
             enableMemo(championId);
         }
+        checkAndUpdateFormationMemo(slot); // 추가: 클릭한 슬롯 기준으로 메모 업데이트
     } else if (clickCount === 2) {
         selectedSlot = slot;
         displayRoleSelection();
@@ -861,6 +866,17 @@ function initializeHorizontalDrag() {
         isDragging = false;
     });
 }
+
+
+
+
+// main.js
+
+// ... 기존 코드 ...
+
+// loadDataFromBase64 함수 수정
+
+
 
 
 function generateExportData() {
