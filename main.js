@@ -311,26 +311,34 @@ $(document).ready(function() {
 });
 
 // 모든 메모리와 인덱스 데이터베이스 삭제 함수
-// main.js 내
 function deleteAllData() {
-    // 일반 메모 삭제
-    $('#editor').summernote('code', '');
+    // 팀 슬롯 안의 내용만 비우기
+    $('#my-team .team .slot').each(function() {
+        $(this).empty();  // 슬롯 내의 이미지만 비웁니다.
+    });
+    $('#enemy-team .team .slot').each(function() {
+        $(this).empty();  // 상대 팀 슬롯의 내용도 비웁니다.
+    });
 
-    // 구도 메모 삭제
-    $('#formation-editor').summernote('code', '');
+    // 메모 에디터 비우기
+    $('#editor').summernote('code', '');  // 일반 메모 초기화
+    $('#formation-editor').summernote('code', '');  // 구도 메모 초기화
 
     // IndexedDB 모든 데이터 삭제
     if (db) {
+        let transaction = db.transaction(['memos', 'formations'], 'readwrite');
+
         // memos 데이터 삭제
-        let transaction = db.transaction(['memos'], 'readwrite');
-        let memosStore = transaction.objectStore('memos');
-        memosStore.clear();
+        transaction.objectStore('memos').clear();
 
         // formations 데이터 삭제
-        transaction = db.transaction(['formations'], 'readwrite');
-        let formationsStore = transaction.objectStore('formations');
-        formationsStore.clear();
+        transaction.objectStore('formations').clear();
     }
+
+    // 메모 데이터 초기화
+    formationMemos = {};
+
+    alert('모든 데이터가 삭제되었습니다.');
 }
 
 
