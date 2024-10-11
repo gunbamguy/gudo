@@ -165,17 +165,14 @@ function setChampionToSlot(slot, championId) {
     const img = $('<img>', {
         src: `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${championId}.png`,
         alt: championId,
-        css: {
-            width: '100%',  // 슬롯 안에서 이미지가 잘리는 것을 방지하기 위해 95%로 설정
-            height: '100%', // 슬롯 안에서 이미지가 잘리는 것을 방지하기 위해 95%로 설정
-            objectFit: 'cover',
-            borderRadius: '4px',
-            marginTop: '0px', // 이미지가 위로 5px 이동하도록 설정
-            marginBottom: '5px' // 이미지의 아래쪽 여백을 설정하여 충분한 공간을 확보
+        css: { 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover', 
+            borderRadius: '4px' 
         }
     });
     $(slot).append(img);
-}
 
     let clickTimeout = null;
     $(slot).off('click').on('click', function(event) {
