@@ -10,6 +10,189 @@ let formationMemos = {};
 let db;
 const dbRequest = indexedDB.open('ChampionMemoDB', 3);
 
+
+$(document).ready(function() {
+
+
+// 스탯 내보내기 버튼 이벤트 핸들러 수정 (모달 창을 화면 상단으로 이동하고 내보내기 데이터 정렬)
+$('#copy-stats-button').on('click', function() {
+    const myTeamContainer = $('#my-team').find('.team');
+    const enemyTeamContainer = $('#enemy-team').find('.team');
+
+    let championsToFetch = [];
+
+    // 내 팀 슬롯에 있는 챔피언 정보 수집
+    myTeamContainer.children().each(function() {
+        const championId = $(this).find('img').attr('alt');
+        if (championId) {
+            championsToFetch.push(championId);
+        }
+    });
+
+    // 상대 팀 슬롯에 있는 챔피언 정보 수집
+    enemyTeamContainer.children().each(function() {
+        const championId = $(this).find('img').attr('alt');
+        if (championId) {
+            championsToFetch.push(championId);
+        }
+    });
+
+    // 챔피언이 없다면 경고 메시지 출력
+    if (championsToFetch.length === 0) {
+        alert('양 팀에 선택된 챔피언이 없습니다.');
+        return;
+    }
+
+    // 챔피언 데이터 가져오기 및 표에 삽입
+    Promise.all(championsToFetch.map(championId => {
+        return fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion/${championId}.json`)
+            .then(response => response.json())
+            .then(data => {
+                const champion = data.data[championId];
+                let rowData = `<tr><td>${champion.name}</td>`;
+
+                // 스킬 정보 추가 (쿨다운과 사거리를 각 칸으로 나누어 표시)
+                champion.spells.forEach((spell) => {
+                    const cooldown = spell.cooldownBurn;
+                    const range = spell.rangeBurn || '알 수 없음';
+
+                    rowData += `<td>쿨다운: ${cooldown}</td><td>사거리: ${range}</td>`;
+                });
+
+                rowData += '</tr>';
+                return rowData;
+            });
+    }))
+    .then(rows => {
+        // 모달 요소 동적 생성
+        const modal = $('<div>', {
+            id: 'stats-modal',
+            class: 'modal',
+            css: {
+                display: 'flex',
+                justifyContent: 'flex-start',  // 모달 창을 화면 상단으로 이동
+                alignItems: 'flex-start',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                zIndex: 9999,
+                paddingTop: '50px'  // 상단 여백 추가
+            }
+        });
+        const modalContent = $('<div>', {
+            class: 'modal-content',
+            css: {
+                backgroundColor: '#fff',
+                padding: '30px',
+                borderRadius: '8px',
+                width: '95%',
+                maxWidth: '1200px',
+                textAlign: 'center',
+                position: 'relative'
+            }
+        });
+
+        // 내보내기 버튼 생성
+        const exportButton = $('<button>', {
+            text: '내보내기',
+            css: {
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                padding: '10px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                backgroundColor: '#28a745',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px'
+            },
+            click: () => exportTableData()
+        });
+
+        // 표 요소 생성
+        const table = $('<table>', {
+            id: 'stats-table',
+            class: 'table table-bordered',
+            css: { width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }
+        });
+        const tableBody = $('<tbody>').html(rows.join(''));
+
+        // 표와 닫기 버튼 추가
+        table.append(tableBody);
+        modalContent.append('<h2>챔피언 스탯 정보</h2>');
+        modalContent.append(exportButton);
+        modalContent.append(table);
+        const closeButton = $('<button>', {
+            text: '닫기',
+            click: () => modal.remove(),
+            css: {
+                marginTop: '10px',
+                padding: '10px 20px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                backgroundColor: '#007bff',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px'
+            }
+        });
+        modalContent.append(closeButton);
+
+        // 모달 추가 후 보여줌
+        modal.append(modalContent);
+        $('body').append(modal);
+    })
+    .catch(error => {
+        console.error('챔피언 정보 로드 실패:', error);
+    });
+
+    // 테이블 데이터를 텍스트 형식으로 내보내는 함수 (정렬된 형식 유지)
+    function exportTableData() {
+        let exportData = '';
+
+        $('#stats-table tbody tr').each(function() {
+            let rowData = [];
+            $(this).find('td').each(function() {
+                rowData.push($(this).text());
+            });
+
+            // 정렬된 형식으로 출력하기 위해 각 데이터의 위치를 일정하게 맞춤
+            const fieldLengths = [30, 30, 20, 30, 20, 30, 20, 30, 20];  // 각 필드의 고정 길이 정의
+
+            let formattedRow = '';
+            for (let i = 0; i < rowData.length; i++) {
+                formattedRow += rowData[i].padEnd(fieldLengths[i], ' ');  // 각 필드를 고정된 길이로 맞춰서 추가
+            }
+
+            exportData += formattedRow.trim() + '\n';
+        });
+
+        const blob = new Blob([exportData], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'champion_stats.txt';
+        link.click();
+
+        window.URL.revokeObjectURL(url);
+    }
+});
+
+});
+
+
+
+
+
+
+
+
+
 dbRequest.onerror = function(event) {
     console.error('IndexedDB Error:', event);
 };
