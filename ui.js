@@ -523,54 +523,6 @@ function removeSlots() {
     }
 }
 
-// Add Comparison Button
-function addComparisonButton(mySlotNumber, enemySlotNumber) {
-    const comparisonContainer = $('#comparison-buttons');
-    const comparisonButton = $('<button>', {
-        class: 'compare-btn',
-        text: `비교 ${mySlotNumber}/${enemySlotNumber}`,
-        click: () => {
-            console.log(`Compare button clicked: My Team Slot ${mySlotNumber}, Enemy Team Slot ${enemySlotNumber}`);
-            compareSlots(mySlotNumber, enemySlotNumber);
-        }
-    });
-    comparisonContainer.append(comparisonButton);
-}
-
-// Enable Memo
-function enableMemo(championId) {
-    currentChampionId = championId;
-    $('#memo-container').show();
-    loadMemo(championId, memo => {
-        $('#editor').summernote('code', memo.memoContent || '');
-    });
-}
-
-// Compare Slots
-function compareSlots(mySlotNumber, enemySlotNumber) {
-    // Existing code to compare slots and display charts
-}
-
-// Insert Spell Image to Editor
-function insertSpellImageToEditor(imageName, spellName) {
-    const imageUrl = `https://ddragon.leagueoflegends.com/cdn/${version}/img/spell/${imageName}`;
-    $('#editor').summernote('insertImage', imageUrl, spellName);
-}
-
-// Show Page
-function showPage(pageNumber) {
-    if (pageNumber === 1) {
-        $('#compare-page-1').show();
-        $('#compare-page-2').hide();
-    } else if (pageNumber === 2) {
-        $('#compare-page-1').hide();
-        $('#compare-page-2').show();
-    }
-}
-
-// 비교 기능 관련 함수들
-
-// compareSlots 함수
 function compareSlots(mySlotNumber, enemySlotNumber) {
     // 1-based index를 0-based index로 변환
     const mySlotIndex = mySlotNumber - 1;
@@ -664,34 +616,57 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
             };
         });
 
-        // 스킬 쿨타임 데이터셋 생성 (레벨별로 다르게 표시, 내 스킬과 적 스킬을 나란히 비교)
+        // 스킬 쿨타임 데이터셋 생성
         const skillDatasets = [];
-        const levels = ['레벨 1', '레벨 2', '레벨 3', '레벨 4', '레벨 5'];
-
-        for (let i = 0; i < skillLabels.length; i++) {
+        skillLabels.forEach((label, i) => {
             skillDatasets.push(
                 {
-                    label: `${championsData[0].name} ${skillLabels[i]}`,
+                    label: `${championsData[0].name} ${label}`,
                     data: championsData[0].spells[i].cooldown,
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
                     borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
+                    borderWidth: 1,
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: -10
+                    }
                 },
                 {
-                    label: `${championsData[1].name} ${skillLabels[i]}`,
+                    label: `${championsData[1].name} ${label}`,
                     data: championsData[1].spells[i].cooldown,
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
                     borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
+                    borderWidth: 1,
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'bottom',
+                        offset: -10
+                    }
                 }
             );
-        }
+        });
+
+        // 빈 간격 추가를 위한 콜백 구현
+        const skillDatasetsWithGaps = [];
+        skillDatasets.forEach((dataset, index) => {
+            skillDatasetsWithGaps.push(dataset);
+            if (index % 2 === 1) {
+                skillDatasetsWithGaps.push({
+                    label: '간격',
+                    data: Array(dataset.data.length).fill(null),
+                    backgroundColor: 'rgba(0, 0, 0, 0)',
+                    borderColor: 'rgba(0, 0, 0, 0)',
+                    borderWidth: 0
+                });
+            }
+        });
 
         // 스킬 사거리 데이터셋 생성
         const rangeDatasets = championsData.map((champion, index) => {
             return {
                 label: champion.name,
-                data: champion.spells.map(spell => spell.rangeBurn),
+                data: champion.spells.map(spell => parseInt(spell.rangeBurn)),
                 backgroundColor: index === 0 ? 'rgba(153, 102, 255, 0.2)' : 'rgba(255, 206, 86, 0.2)',
                 borderColor: index === 0 ? 'rgba(153, 102, 255, 1)' : 'rgba(255, 206, 86, 1)',
                 borderWidth: 1
@@ -714,167 +689,144 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
             }
         });
 
-
-		// 원래 데이터 세트를 바탕으로 데이터 위치를 조정하여 새로운 데이터셋 생성
-		let expandedSkillDatasets = []; // 초기화
-
-		for (let i = 0; i < skillDatasets.length; i += 2) {
-			// 첫 번째 챔피언 데이터 세트
-			expandedSkillDatasets.push(skillDatasets[i]);
-
-			// 빈 데이터를 넣지 않고 두 번째 챔피언 데이터 세트 추가
-			if (i + 1 < skillDatasets.length) {
-				expandedSkillDatasets.push(skillDatasets[i + 1]);
-			}
-
-			// 두 데이터 세트 사이에 새로 추가되는 빈칸이 아닌 데이터 세트 (더미 데이터)
-			expandedSkillDatasets.push({
-				label: '간격 데이터',
-				data: skillDatasets[i].data.map(() => null), // 간격을 주기 위해 빈 데이터 추가
-				backgroundColor: 'rgba(0, 0, 0, 0)', // 완전히 투명하게 설정
-				borderColor: 'rgba(0, 0, 0, 0)',
-				borderWidth: 0,
-				hoverBackgroundColor: 'rgba(0, 0, 0, 0)', // 호버 시에도 투명하게 유지
-				hoverBorderColor: 'rgba(0, 0, 0, 0)',
-				// 더미 데이터셋을 숨기기 위한 추가 설정 (필요 시)
-				// hidden: true, // 간격 유지에는 영향을 줄 수 있으므로 주석 처리
-			});
-		}
-
-				new Chart(skillCtx, {
-    type: 'bar',
-    data: {
-        labels: levels,
-        datasets: expandedSkillDatasets
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        aspectRatio: 0.5, // 차트의 높이를 늘리기 위해 비율을 낮게 설정
-        interaction: {
-            mode: 'index',
-            intersect: false
-        },
-        plugins: {
-            tooltip: {
-                enabled: true,
-                mode: 'index',
-                intersect: false,
-                callbacks: {
-                    label: function(context) {
-                        if (context.dataset.label === '간격 데이터') {
-                            return '';
+        // 스킬 쿨타임 차트 생성
+        new Chart(skillCtx, {
+            type: 'bar',
+            data: {
+                labels: ['레벨 1', '레벨 2', '레벨 3', '레벨 4', '레벨 5'],
+                datasets: skillDatasetsWithGaps
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 0.5, // 차트의 높이를 늘리기 위해 비율을 낮게 설정
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.label === '간격') {
+                                    return '';
+                                }
+                                return `${context.dataset.label}: ${context.raw}`;
+                            }
+                        },
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            family: 'Arial, sans-serif',
+                            size: 14,
+                            weight: 'bold',
+                            color: '#fff'
+                        },
+                        bodyFont: {
+                            family: 'Arial, sans-serif',
+                            size: 12,
+                            color: '#fff'
+                        },
+                        padding: 10,
+                        cornerRadius: 5
+                    },
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: '#444',
+                            font: {
+                                family: 'Arial, sans-serif',
+                                size: 12
+                            }
                         }
-                        return `${context.dataset.label}: ${context.raw}`;
-                    }
-                },
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                titleFont: {
-                    family: 'Arial, sans-serif',
-                    size: 14,
-                    weight: 'bold',
-                    color: '#fff'
-                },
-                bodyFont: {
-                    family: 'Arial, sans-serif',
-                    size: 12,
-                    color: '#fff'
-                },
-                padding: 10,
-                cornerRadius: 5
-            },
-            legend: {
-                display: true,
-                labels: {
-                    filter: function(item, chart) {
-                        return item.text !== '간격 데이터';
                     },
-                    color: '#444',
-                    font: {
-                        family: 'Arial, sans-serif',
-                        size: 12
+                    datalabels: {
+                        color: '#444', // 숫자 색상
+                        anchor: 'center',
+                        align: 'start',
+						offset: -100, // 막대에서 떨어진 위치
+                        offset: function(context) {
+                            // 동일한 값이 겹치지 않도록 오프셋을 조정합니다.
+                            const index = context.dataIndex;
+                            return index % 2 === 0 ? -50 : 50;
+                        },
+                        font: {
+                            size: 15, // 숫자 크기
+                            family: 'Arial, sans-serif'
+                        },
+                        formatter: function(value) {
+                            return value !== null ? value : ''; // 숫자 표시
+                        }
                     }
-                }
-            },
-            // dataLabels 플러그인 추가
-            datalabels: {
-                color: '#444', // 숫자 색상
-                anchor: 'end',
-                align: 'start',
-                offset: -20, // 숫자 위치 조정
-                font: {
-                    size: 15, // 숫자 크기
-                    family: 'Arial, sans-serif'
                 },
-                formatter: function(value) {
-                    return value !== null ? value : ''; // 숫자 표시
-                }
-            }
-        },
-        scales: {
-            x: {
-                stacked: false,
-                grid: {
-                    display: false
-                },
-                ticks: {
-                    padding: 10,
-                    color: '#444',
-                    font: {
-                        family: 'Arial, sans-serif',
-                        size: 12
-                    }
-                }
-            },
-            y: {
-                type: 'logarithmic', // 로그 스케일 적용
-                beginAtZero: true,
-                grid: {
-                    color: 'rgba(200, 200, 200, 0.2)',
-                    lineWidth: 1
-                },
-                ticks: {
-                    callback: function(value) {
-                        return value === 1 ? '1' : Number(value).toLocaleString();
+                scales: {
+                    x: {
+                        stacked: false,
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            padding: 10,
+                            color: '#444',
+                            font: {
+                                family: 'Arial, sans-serif',
+                                size: 12
+                            }
+                        }
                     },
-                    color: '#444',
-                    font: {
-                        family: 'Arial, sans-serif',
-                        size: 12
+                    y: {
+                        type: 'logarithmic', // 로그 스케일 적용
+                        min: 1,
+                        max: 300,
+                        grid: {
+                            color: 'rgba(200, 200, 200, 0.2)',
+                            lineWidth: 1
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                if (value === 1 || value === 5 || value === 10 || value === 30 || value === 50 || value === 100) {
+                                    return value.toString();
+                                }
+                                return '';
+                            },
+                            color: '#444',
+                            font: {
+                                family: 'Arial, sans-serif',
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                categoryPercentage: 1.0, // 카테고리 전체를 차지하게 설정 (간격을 좁힘)
+                barPercentage: 1.0,      // 막대 두께를 최대화 (두껍게)
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutBounce'
+                },
+                elements: {
+                    bar: {
+                        borderWidth: 2,
+                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                        borderSkipped: false,
+                        backgroundColor: (context) => {
+                            const index = context.dataIndex;
+                            const colors = [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(153, 102, 255, 0.7)',
+                                'rgba(255, 159, 64, 0.7)'
+                            ];
+                            return colors[index % colors.length];
+                        }
                     }
                 }
-            }
-        },
-        categoryPercentage: 1.0, // 카테고리 전체를 차지하게 설정 (간격을 좁힘)
-        barPercentage: 1.0,      // 막대 두께를 최대화 (두껍게)
-        animation: {
-            duration: 1000,
-            easing: 'easeOutBounce'
-        },
-        elements: {
-            bar: {
-                borderWidth: 2,
-                borderColor: 'rgba(0, 0, 0, 0.1)',
-                borderSkipped: false,
-                backgroundColor: (context) => {
-                    const index = context.dataIndex;
-                    const colors = [
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)',
-                        'rgba(153, 102, 255, 0.7)',
-                        'rgba(255, 159, 64, 0.7)'
-                    ];
-                    return colors[index % colors.length];
-                }
-            }
-        }
-    },
-    plugins: [ChartDataLabels] // Chart.js Data Labels 플러그인 사용
-});
-
-
+            },
+            plugins: [ChartDataLabels]
+        });
 
         // 스킬 사거리 차트 생성
         new Chart(rangeCtx, {
