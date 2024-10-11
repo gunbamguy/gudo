@@ -494,7 +494,7 @@ function addComparisonButton(mySlotNumber, enemySlotNumber) {
     const comparisonContainer = $('#comparison-buttons');
     const comparisonButton = $('<button>', {
         class: 'compare-btn',
-        text: `Compare ${mySlotNumber}/${enemySlotNumber}`,
+        text: `비교 ${mySlotNumber}/${enemySlotNumber}`,
         click: () => {
             console.log(`Compare button clicked: My Team Slot ${mySlotNumber}, Enemy Team Slot ${enemySlotNumber}`);
             compareSlots(mySlotNumber, enemySlotNumber);
