@@ -342,3 +342,9 @@ function deleteAllData() {
 }
 
 
+// 선택한 챔피언에 대한 메모를 활성화하는 함수
+function enableMemo(championId) {
+    loadMemo(championId, function(memo) {
+        $('#editor').summernote('code', memo.memoContent || '');
+    });
+}

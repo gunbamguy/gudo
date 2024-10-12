@@ -80,8 +80,29 @@ function displayRoleSelection() {
     const modal = $('#champion-selection');
     modal.show();
 
-    const roleSelectionDiv = $('#role-selection');
-    roleSelectionDiv.empty();
+    const modalContent = modal.find('.modal-content');
+    modalContent.empty(); // 기존 내용을 비웁니다.
+
+    // 드롭다운 메뉴 생성
+    const memoChampionDropdownLabel = $('<label>', { text: '저장된 챔피언 메모: ' });
+    const memoChampionDropdown = $('<select>', { id: 'memo-champion-dropdown' });
+
+    const formationDropdownLabel = $('<label>', { text: '저장된 구도 메모: ' });
+    const formationDropdown = $('<select>', { id: 'formation-dropdown' });
+
+    // 드롭다운 메뉴를 모달에 추가
+    modalContent.append(memoChampionDropdownLabel, memoChampionDropdown, formationDropdownLabel, formationDropdown);
+
+    // 저장된 챔피언 메모 불러오기
+    populateMemoChampionDropdown(memoChampionDropdown);
+
+    // 저장된 구도 메모 불러오기
+    populateFormationDropdown(formationDropdown);
+
+    // 기존 역할 선택 및 챔피언 선택 UI 추가
+    modalContent.append('<h2>역할 선택</h2>');
+    const roleSelectionDiv = $('<div>', { id: 'role-selection' });
+    modalContent.append(roleSelectionDiv);
 
     roles.forEach(role => {
         const roleButton = $('<button>', {
@@ -98,6 +119,16 @@ function displayRoleSelection() {
         click: () => displayChampionList('전체')
     });
     roleSelectionDiv.append(allButton);
+
+    modalContent.append('<h2>챔피언 선택</h2>');
+    const championListDiv = $('<div>', { id: 'champion-list' });
+    modalContent.append(championListDiv);
+
+    const closeButton = $('<button>', {
+        text: '닫기',
+        click: () => modal.hide()
+    });
+    modalContent.append(closeButton);
 }
 
 // Display Champion List
@@ -971,4 +1002,142 @@ function generateExportData() {
 }
 
 
+
+function populateMemoChampionDropdown(dropdown) {
+    if (!db) {
+        alert('데이터베이스가 초기화되지 않았습니다.');
+        return;
+    }
+
+    const transaction = db.transaction(['memos'], 'readonly');
+    const store = transaction.objectStore('memos');
+    const request = store.getAll();
+
+    request.onsuccess = function(event) {
+        const memos = event.target.result;
+
+        // 기본 옵션 추가
+        dropdown.append($('<option>', { value: '', text: '선택하세요' }));
+
+        memos.forEach(memo => {
+            const championId = memo.championId;
+            const championName = championList[championId] ? championList[championId].name : championId;
+            const option = $('<option>', { value: championId, text: championName });
+            dropdown.append(option);
+        });
+    };
+
+    request.onerror = function(event) {
+        console.error('챔피언 메모 불러오기 오류:', event.target.error);
+    };
+
+    // 드롭다운 변경 이벤트 추가
+    dropdown.on('change', function() {
+        const selectedChampionId = $(this).val();
+        if (selectedChampionId) {
+            // 내 팀 첫 번째 슬롯에 챔피언 설정
+            const myTeamContainer = $('#my-team').find('.team');
+            const firstSlot = myTeamContainer.children().eq(0)[0];
+            setChampionToSlot(firstSlot, selectedChampionId);
+            // 모달 닫기
+            $('#champion-selection').hide();
+        }
+    });
+}
+
+
+function populateFormationDropdown(dropdown) {
+    if (!db) {
+        alert('데이터베이스가 초기화되지 않았습니다.');
+        return;
+    }
+
+    const transaction = db.transaction(['formations'], 'readonly');
+    const store = transaction.objectStore('formations');
+    const request = store.getAll();
+
+    request.onsuccess = function(event) {
+        const formations = event.target.result;
+
+        // 기본 옵션 추가
+        dropdown.append($('<option>', { value: '', text: '선택하세요' }));
+
+        formations.forEach(formation => {
+            const key = formation.key;
+            // 키에서 챔피언 ID 추출
+            const myTeamMatch = key.match(/my:([^_]+)_enemy:([^_]+)/);
+            if (myTeamMatch) {
+                const myChampions = myTeamMatch[1].split('-');
+                const enemyChampions = myTeamMatch[2].split('-');
+
+                // 첫 번째 챔피언 이름 가져오기
+                const myChampionId = myChampions[0];
+                const enemyChampionId = enemyChampions[0];
+
+                const myChampionName = championList[myChampionId] ? championList[myChampionId].name : myChampionId;
+                const enemyChampionName = championList[enemyChampionId] ? championList[enemyChampionId].name : enemyChampionId;
+
+                const optionText = `${myChampionName} vs ${enemyChampionName}`;
+                const option = $('<option>', { value: key, text: optionText });
+                dropdown.append(option);
+            }
+        });
+    };
+
+    request.onerror = function(event) {
+        console.error('구도 메모 불러오기 오류:', event.target.error);
+    };
+
+    // 드롭다운 변경 이벤트 추가
+    dropdown.on('change', function() {
+        const selectedKey = $(this).val();
+        if (selectedKey) {
+            // 구도 메모 및 챔피언 슬롯 설정
+            const transaction = db.transaction(['formations'], 'readonly');
+            const store = transaction.objectStore('formations');
+            const request = store.get(selectedKey);
+
+            request.onsuccess = function(event) {
+                const formation = event.target.result;
+                if (formation) {
+                    // 구도 메모 내용 설정
+                    $('#formation-editor').summernote('code', formation.memoContent);
+
+                    // 챔피언 슬롯 설정
+                    const myTeamMatch = selectedKey.match(/my:([^_]+)_enemy:([^_]+)/);
+                    if (myTeamMatch) {
+                        const myChampions = myTeamMatch[1].split('-');
+                        const enemyChampions = myTeamMatch[2].split('-');
+
+                        const myTeamContainer = $('#my-team').find('.team');
+                        const enemyTeamContainer = $('#enemy-team').find('.team');
+
+                        myTeamContainer.children().each(function(index) {
+                            if (myChampions[index]) {
+                                setChampionToSlot(this, myChampions[index]);
+                            } else {
+                                $(this).empty();
+                            }
+                        });
+
+                        enemyTeamContainer.children().each(function(index) {
+                            if (enemyChampions[index]) {
+                                setChampionToSlot(this, enemyChampions[index]);
+                            } else {
+                                $(this).empty();
+                            }
+                        });
+                    }
+
+                    // 모달 닫기
+                    $('#champion-selection').hide();
+                }
+            };
+
+            request.onerror = function(event) {
+                console.error('구도 메모 로드 오류:', event.target.error);
+            };
+        }
+    });
+}
 

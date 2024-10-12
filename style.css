@@ -879,3 +879,17 @@ body.dark-mode {
         color: #ffffff;
     }
 }
+
+
+/* champion-selection 모달 내부의 레이블과 드롭다운 스타일 */
+#champion-selection label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+#champion-selection select {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+}
