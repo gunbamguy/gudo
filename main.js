@@ -165,7 +165,7 @@ $(document).ready(function() {
     $('#formation-editor').summernote({
         height: 'auto',
         minHeight: 150,
-        maxHeight: null,
+        maxHeight: 500,
         focus: true,
         lang: 'ko-KR',
         toolbar: [
