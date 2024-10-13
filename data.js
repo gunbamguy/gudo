@@ -12,7 +12,11 @@ const dbRequest = indexedDB.open('ChampionMemoDB', 3);
 
 
 $(document).ready(function() {
-
+	    $('#export-data-button').on('click', exportData);
+    $('#import-data-button').on('click', function() {
+        $('#import-file-input').click();
+    });
+    $('#import-file-input').on('change', importData);
     $('#copy-stats-button').on('click', copyStats);
 
 
@@ -579,6 +583,7 @@ function exportDataToClipboard() {
 }
 
 
+//// exportDataAsUrl
 function exportDataAsUrl() {
     const data = {
         version: version,
@@ -623,22 +628,24 @@ function exportDataAsUrl() {
             data.championMemos[record.championId] = record.memoContent;
         });
 
-        // JSON 문자열을 Base64로 인코딩
+        // JSON 문자열을 Base64로 인코딩 (유니코드 대응)
         const jsonStr = JSON.stringify(data);
-        const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
-
-        // 현재 URL에서 기존 쿼리 파라미터 제거
-        const currentUrl = window.location.href.split('?')[0];
-        // 새 URL 생성
-        const newUrl = `${currentUrl}?data=${encodeURIComponent(base64Str)}`;
-
-        // 클립보드에 URL 복사
-        navigator.clipboard.writeText(newUrl).then(() => {
-            alert('주소가 클립보드에 복사되었습니다.');
-        }).catch(err => {
-            console.error('클립보드 복사 실패:', err);
-            alert('주소 복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
-        });
+        try {
+            const base64Str = encodeBase64(jsonStr);
+            // URL에 데이터 추가
+            const currentUrl = window.location.href.split('?')[0];
+            const newUrl = `${currentUrl}?data=${encodeURIComponent(base64Str)}`;
+            // 클립보드에 URL 복사
+            navigator.clipboard.writeText(newUrl).then(() => {
+                alert('주소가 클립보드에 복사되었습니다.');
+            }).catch(err => {
+                console.error('클립보드 복사 실패:', err);
+                alert('주소 복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
+            });
+        } catch (error) {
+            console.error('Base64 인코딩 오류:', error);
+            alert('데이터 인코딩에 실패했습니다.');
+        }
     };
 
     request.onerror = function(event) {
@@ -649,7 +656,7 @@ function exportDataAsUrl() {
 
 
 
-// Load Data from Base64
+// loadDataFromBase64
 function loadDataFromBase64(base64Data) {
     try {
         const jsonStr = decodeURIComponent(escape(atob(base64Data)));
@@ -723,6 +730,7 @@ function loadDataFromBase64(base64Data) {
         alert('데이터 불러오기에 실패했습니다.');
     }
 }
+
 
 // Get Role Tag
 function getRoleTag(role) {
