@@ -12,11 +12,7 @@ const dbRequest = indexedDB.open('ChampionMemoDB', 3);
 
 
 $(document).ready(function() {
-	    $('#export-data-button').on('click', exportData);
-    $('#import-data-button').on('click', function() {
-        $('#import-file-input').click();
-    });
-    $('#import-file-input').on('change', importData);
+
     $('#copy-stats-button').on('click', copyStats);
 
 
