@@ -238,6 +238,22 @@
     });
 </script>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function toggleNavbarRight() {
+            const navbarRight = document.querySelector('.navbar-right');
+            if (window.innerWidth <= 1400) {
+                navbarRight.style.display = 'none';
+            } else {
+                navbarRight.style.display = '';
+            }
+        }
+
+        // 페이지 로드 시 및 윈도우 리사이즈 시 실행
+        toggleNavbarRight();
+        window.addEventListener('resize', toggleNavbarRight);
+    });
+</script>
 
 
 
