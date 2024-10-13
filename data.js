@@ -253,6 +253,7 @@ function saveMemo(championId, memo) {
     const transaction = db.transaction(['memos'], 'readwrite');
     const store = transaction.objectStore('memos');
     store.put({ championId: championId, memoContent: memo.memoContent });
+    populateMemoChampionDropdown($('#memo-champion-dropdown'));
     alert('챔프 메모 저장완료.');
 }
 
@@ -303,6 +304,7 @@ function saveFormation() {
         const transaction = db.transaction(['formations'], 'readwrite');
         const store = transaction.objectStore('formations');
         store.put({ key: key, memoContent: memoContent });
+	populateFormationDropdown($('#formation-dropdown'));
 
         transaction.oncomplete = function() {
             alert('구도 저장이 완료되었습니다.');
