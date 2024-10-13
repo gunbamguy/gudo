@@ -3,6 +3,13 @@
 // Editor Initialization and Event Handlers
 
 $(document).ready(function() {
+	
+	
+	const urlParams = new URLSearchParams(window.location.search);
+    const base64Data = urlParams.get('data');
+    if (base64Data) {
+        loadDataFromBase64(base64Data);
+    }
     // 메인 페이지에서만 실행되는 코드
     if ($('#main-container').length) {
         // 챔피언 선택 버튼 이벤트 리스너
@@ -319,17 +326,12 @@ $(document).ready(function() {
 
     $('#save-formation-button').on('click', saveFormation);
 	
-	$('#export-url-button').on('click', function() {
-                exportDataAsUrl();
-            
-
-            // 페이지가 로드될 때 URL에 데이터가 있으면 처리
-        const urlParams = new URLSearchParams(window.location.search);
-        const base64Data = urlParams.get('data');
-        if (base64Data) {
-            loadDataFromBase64(base64Data);
-        }
+	// export-url-button 클릭 핸들러 수정
+$('#export-url-button').on('click touchstart', function() {
+    exportDataAsUrl();
 });
+
+			
 
 // 모든 메모리와 인덱스 데이터베이스 삭제 함수
 function deleteAllData() {
