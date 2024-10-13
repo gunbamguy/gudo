@@ -11,7 +11,7 @@ const roles = ['탑', '정글', '미드', '원딜', '서폿'];
 
 
 $(document).ready(function() {
-    // main-container 또는 popup.html의 관련 요소가 존재할 때만 초기화
+    // 메인 컨테이너 또는 팝업 관련 요소가 존재할 때만 초기화
     if ($('#main-container').length || $('#main-popup-container').length) {
         // 슬롯 추가/제거 버튼 이벤트 리스너
         $('#add-slot-button').on('click', addSlots);
@@ -19,7 +19,7 @@ $(document).ready(function() {
 
         // 챔피언 선택 버튼 이벤트 리스너
         $('#select-champion-button').on('click', function() {
-            if (window.myTeamSlots > 0) {
+            if (myTeamSlots > 0) {
                 selectedSlot = $('#my-team').find('.team').children().eq(0)[0];
                 displayRoleSelection();
             }
@@ -46,8 +46,13 @@ $(document).ready(function() {
         // 초기 데이터 로드
         fetchChampionData();
     }
-});
 
+    // 역할 선택 버튼 이벤트 리스너 (중복 제거)
+    $('.role-button').on('click', function() {
+        const role = $(this).text();
+        displayChampionList(role);
+    });
+});
 // Initialize Vertical Drag
 function initializeVerticalDrag() {
     const verticalDivider = document.getElementById('vertical-divider-right');
@@ -137,113 +142,45 @@ function initializeHorizontalDrag() {
 }
 
 // Display Role Selection
+
 function displayRoleSelection() {
     const modal = $('#champion-selection');
     modal.show();
 
     const modalContent = modal.find('.modal-content');
-    modalContent.empty(); // 기존 내용을 비웁니다.
+    modalContent.empty(); // 기존 내용 제거
 
-    // 드롭다운 메뉴 생성
-    const memoChampionDropdownLabel = $('<label>', { text: '저장된 챔피언 메모: ' });
-    const memoChampionDropdown = $('<select>', { id: 'memo-champion-dropdown' });
-
-    const formationDropdownLabel = $('<label>', { text: '저장된 구도 메모: ' });
-    const formationDropdown = $('<select>', { id: 'formation-dropdown' });
-
-    // 드롭다운 메뉴를 모달에 추가
-    modalContent.append(memoChampionDropdownLabel, memoChampionDropdown, formationDropdownLabel, formationDropdown);
-
-    // 저장된 챔피언 메모 불러오기
-    populateMemoChampionDropdown(memoChampionDropdown);
-
-    // 저장된 구도 메모 불러오기
-    populateFormationDropdown(formationDropdown);
-
-    // 기존 역할 선택 및 챔피언 선택 UI 추가
-    modalContent.append('<h2>역할 선택</h2>');
-    const roleSelectionDiv = $('<div>', { id: 'role-selection' });
-    modalContent.append(roleSelectionDiv);
-
-    roles.forEach(role => {
-        const roleButton = $('<button>', {
-            text: role,
-            css: { margin: '5px' },
-            click: () => displayChampionList(role)
-        });
-        roleSelectionDiv.append(roleButton);
-    });
-
-    const allButton = $('<button>', {
-        text: '전체',
-        css: { margin: '5px' },
-        click: () => displayChampionList('전체')
-    });
-    roleSelectionDiv.append(allButton);
-
-    modalContent.append('<h2>챔피언 선택</h2>');
-
-    // 검색창 추가
-    const searchInput = $('<input>', {
-        type: 'text',
-        id: 'champion-search',
-        placeholder: '챔피언 이름 검색',
+    // 드롭다운 메뉴를 왼쪽에 정렬하기 위한 컨테이너
+    const dropdownContainer = $('<div>', {
         css: {
-            marginBottom: '10px',
-            padding: '5px',
-            width: '95%'
+            display: 'flex',
+            justifyContent: 'flex-start', // 왼쪽 정렬
+            alignItems: 'center', // 수직 정렬
+            gap: '10px', // 드롭다운 간의 간격 설정
+            marginBottom: '20px'
         }
     });
-    modalContent.append(searchInput);
 
-    const championListDiv = $('<div>', { id: 'champion-list' });
-    modalContent.append(championListDiv);
+    // 드롭다운 메뉴 추가
+    const memoChampionDropdownLabel = $('<label>', { text: '', for: 'memo-champion-dropdown-modal' });
+    const memoChampionDropdown = $('<select>', { id: 'memo-champion-dropdown-modal', class: 'form-control', style: 'width: 45%;' });
+    memoChampionDropdown.append($('<option>', { value: '', text: '선택하세요' }));
 
-    // 검색 기능 구현
-    $('#champion-search').on('input', function() {
-        const searchTerm = $(this).val().toLowerCase();
-        $('.champion-button').each(function() {
-            const championName = $(this).text().toLowerCase();
-            if (championName.includes(searchTerm)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-    });
+    const formationDropdownLabel = $('<label>', { text: '', for: 'formation-dropdown-modal' });
+    const formationDropdown = $('<select>', { id: 'formation-dropdown-modal', class: 'form-control', style: 'width: 45%;' });
+    formationDropdown.append($('<option>', { value: '', text: '선택하세요' }));
 
-    const closeButton = $('<button>', {
-        text: 'X',
-        click: () => modal.hide()
-    });
-    modalContent.append(closeButton);
+    // 드롭다운 메뉴를 컨테이너에 추가 (왼쪽 정렬)
+    dropdownContainer.append(memoChampionDropdownLabel, memoChampionDropdown, formationDropdownLabel, formationDropdown);
 
-    // 챔피언 데이터를 표시
-    displayChampionList('전체');
-}
+    // 드롭다운 컨테이너를 모달에 추가
+    modalContent.append(dropdownContainer);
 
-function displayRoleSelection() {
-    const modal = $('#champion-selection');
-    modal.show();
-
-    const modalContent = modal.find('.modal-content');
-    modalContent.empty(); // 기존 내용을 비웁니다.
-
-    // 드롭다운 메뉴 생성
-    const memoChampionDropdownLabel = $('<label>', { text: '저장된 챔피언 메모: ' });
-    const memoChampionDropdown = $('<select>', { id: 'memo-champion-dropdown' });
-
-    const formationDropdownLabel = $('<label>', { text: '저장된 구도 메모: ' });
-    const formationDropdown = $('<select>', { id: 'formation-dropdown' });
-
-    // 드롭다운 메뉴를 모달에 추가
-    modalContent.append(memoChampionDropdownLabel, memoChampionDropdown, formationDropdownLabel, formationDropdown);
-
-    // 저장된 챔피언 메모 불러오기
-    populateMemoChampionDropdown(memoChampionDropdown);
-
-    // 저장된 구도 메모 불러오기
-    populateFormationDropdown(formationDropdown);
+    // 저장된 챔피언 메모와 구도 메모 불러오기 (메인 및 모달 드롭다운 업데이트)
+    populateMemoChampionDropdown($('#memo-champion-dropdown-main'));
+    populateFormationDropdown($('#formation-dropdown-main'));
+    populateMemoChampionDropdown($('#memo-champion-dropdown-modal'));
+    populateFormationDropdown($('#formation-dropdown-modal'));
 
     // 기존 역할 선택 및 챔피언 선택 UI 추가
     modalContent.append('<h2>역할 선택</h2>');
@@ -252,6 +189,7 @@ function displayRoleSelection() {
 
     roles.forEach(role => {
         const roleButton = $('<button>', {
+            class: 'btn btn-primary role-button',
             text: role,
             css: { margin: '5px' },
             click: () => displayChampionList(role)
@@ -260,6 +198,7 @@ function displayRoleSelection() {
     });
 
     const allButton = $('<button>', {
+        class: 'btn btn-secondary role-button',
         text: '전체',
         css: { margin: '5px' },
         click: () => displayChampionList('전체')
@@ -271,6 +210,7 @@ function displayRoleSelection() {
         type: 'text',
         id: 'champion-search',
         placeholder: '챔피언 이름 검색',
+        class: 'form-control',
         css: {
             marginBottom: '10px',
             padding: '5px',
@@ -279,25 +219,28 @@ function displayRoleSelection() {
     });
     modalContent.append(searchInput);
 
+    // 챔피언 목록 표시
     modalContent.append('<h2>챔피언 선택</h2>');
     const championListDiv = $('<div>', { id: 'champion-list' });
     modalContent.append(championListDiv);
 
+    // 닫기 버튼 추가
     const closeButton = $('<button>', {
-    text: '닫기',
-    css: {
-        position: 'absolute',
-        top: '10px',  // 모달의 상단으로부터 10px
-        right: '10px',  // 모달의 오른쪽으로부터 10px
-        padding: '5px 10px',
-        cursor: 'pointer',
-        backgroundColor: '#d9534f',  // 버튼 색상 (예: 빨간색)
-        color: '#fff',
-        border: 'none',
-        borderRadius: '4px'
-    },
-    click: () => modal.hide()
-});
+        text: '닫기',
+        class: 'btn btn-danger',
+        css: {
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            padding: '5px 10px',
+            cursor: 'pointer',
+            backgroundColor: '#d9534f',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px'
+        },
+        click: () => modal.hide()
+    });
 
     modalContent.append(closeButton);
 
@@ -317,6 +260,8 @@ function displayRoleSelection() {
         });
     });
 }
+
+
 
 function displayChampionList(role) {
     const championListDiv = $('#champion-list');
@@ -1190,141 +1135,5 @@ function generateExportData() {
 
 
 
-function populateMemoChampionDropdown(dropdown) {
-    if (!db) {
-        
-        return;
-    }
 
-    const transaction = db.transaction(['memos'], 'readonly');
-    const store = transaction.objectStore('memos');
-    const request = store.getAll();
-
-    request.onsuccess = function(event) {
-        const memos = event.target.result;
-
-        // 기본 옵션 추가
-        dropdown.append($('<option>', { value: '', text: '선택하세요' }));
-
-        memos.forEach(memo => {
-            const championId = memo.championId;
-            const championName = championList[championId] ? championList[championId].name : championId;
-            const option = $('<option>', { value: championId, text: championName });
-            dropdown.append(option);
-        });
-    };
-
-    request.onerror = function(event) {
-        console.error('챔피언 메모 불러오기 오류:', event.target.error);
-    };
-
-    // 드롭다운 변경 이벤트 추가
-    dropdown.on('change', function() {
-        const selectedChampionId = $(this).val();
-        if (selectedChampionId) {
-            // 내 팀 첫 번째 슬롯에 챔피언 설정
-            const myTeamContainer = $('#my-team').find('.team');
-            const firstSlot = myTeamContainer.children().eq(0)[0];
-            setChampionToSlot(firstSlot, selectedChampionId);
-            // 모달 닫기
-            $('#champion-selection').hide();
-        }
-    });
-}
-
-
-function populateFormationDropdown(dropdown) {
-    if (!db) {
-        
-        return;
-    }
-
-    const transaction = db.transaction(['formations'], 'readonly');
-    const store = transaction.objectStore('formations');
-    const request = store.getAll();
-
-    request.onsuccess = function(event) {
-        const formations = event.target.result;
-
-        // 기본 옵션 추가
-        dropdown.append($('<option>', { value: '', text: '선택하세요' }));
-
-        formations.forEach(formation => {
-            const key = formation.key;
-            // 키에서 챔피언 ID 추출
-            const myTeamMatch = key.match(/my:([^_]+)_enemy:([^_]+)/);
-            if (myTeamMatch) {
-                const myChampions = myTeamMatch[1].split('-');
-                const enemyChampions = myTeamMatch[2].split('-');
-
-                // 첫 번째 챔피언 이름 가져오기
-                const myChampionId = myChampions[0];
-                const enemyChampionId = enemyChampions[0];
-
-                const myChampionName = championList[myChampionId] ? championList[myChampionId].name : myChampionId;
-                const enemyChampionName = championList[enemyChampionId] ? championList[enemyChampionId].name : enemyChampionId;
-
-                const optionText = `${myChampionName} vs ${enemyChampionName}`;
-                const option = $('<option>', { value: key, text: optionText });
-                dropdown.append(option);
-            }
-        });
-    };
-
-    request.onerror = function(event) {
-        console.error('구도 메모 불러오기 오류:', event.target.error);
-    };
-
-    // 드롭다운 변경 이벤트 추가
-    dropdown.on('change', function() {
-        const selectedKey = $(this).val();
-        if (selectedKey) {
-            // 구도 메모 및 챔피언 슬롯 설정
-            const transaction = db.transaction(['formations'], 'readonly');
-            const store = transaction.objectStore('formations');
-            const request = store.get(selectedKey);
-
-            request.onsuccess = function(event) {
-                const formation = event.target.result;
-                if (formation) {
-                    // 구도 메모 내용 설정
-                    $('#formation-editor').summernote('code', formation.memoContent);
-
-                    // 챔피언 슬롯 설정
-                    const myTeamMatch = selectedKey.match(/my:([^_]+)_enemy:([^_]+)/);
-                    if (myTeamMatch) {
-                        const myChampions = myTeamMatch[1].split('-');
-                        const enemyChampions = myTeamMatch[2].split('-');
-
-                        const myTeamContainer = $('#my-team').find('.team');
-                        const enemyTeamContainer = $('#enemy-team').find('.team');
-
-                        myTeamContainer.children().each(function(index) {
-                            if (myChampions[index]) {
-                                setChampionToSlot(this, myChampions[index]);
-                            } else {
-                                $(this).empty();
-                            }
-                        });
-
-                        enemyTeamContainer.children().each(function(index) {
-                            if (enemyChampions[index]) {
-                                setChampionToSlot(this, enemyChampions[index]);
-                            } else {
-                                $(this).empty();
-                            }
-                        });
-                    }
-
-                    // 모달 닫기
-                    $('#champion-selection').hide();
-                }
-            };
-
-            request.onerror = function(event) {
-                console.error('구도 메모 로드 오류:', event.target.error);
-            };
-        }
-    });
-}
 

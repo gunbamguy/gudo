@@ -10,6 +10,37 @@ let formationMemos = {};
 let db;
 const dbRequest = indexedDB.open('ChampionMemoDB', 3);
 
+dbRequest.onupgradeneeded = function(event) {
+    db = event.target.result;
+    if (!db.objectStoreNames.contains('memos')) {
+        db.createObjectStore('memos', { keyPath: 'championId' });
+    }
+    if (db.objectStoreNames.contains('formations')) {
+        db.deleteObjectStore('formations');
+    }
+    db.createObjectStore('formations', { keyPath: 'key' });
+};
+
+dbRequest.onsuccess = function(event) {
+    db = event.target.result;
+
+    // IndexedDB에서 formationMemos 로드
+    const transaction = db.transaction(['formations'], 'readonly');
+    const store = transaction.objectStore('formations');
+    const request = store.getAll();
+
+    request.onsuccess = function(event) {
+        const formations = event.target.result;
+        formations.forEach(formation => {
+            formationMemos[formation.key] = formation.memoContent;
+        });
+    };
+
+    request.onerror = function(event) {
+        console.error('formations 로드 중 오류:', event.target.error);
+    };
+};
+
 
 $(document).ready(function() {
 	    $('#export-data-button').on('click', exportData);
@@ -188,8 +219,9 @@ $('#copy-stats-button').on('click', function() {
 
 });
 
+
 dbRequest.onerror = function(event) {
-    console.error('IndexedDB Error:', event);
+    console.error('IndexedDB 에러:', event);
 };
 
 dbRequest.onupgradeneeded = function(event) {
@@ -206,7 +238,7 @@ dbRequest.onupgradeneeded = function(event) {
 dbRequest.onsuccess = function(event) {
     db = event.target.result;
 
-    // Load formationMemos from IndexedDB
+    // IndexedDB에서 formationMemos 로드
     const transaction = db.transaction(['formations'], 'readonly');
     const store = transaction.objectStore('formations');
     const request = store.getAll();
@@ -219,7 +251,7 @@ dbRequest.onsuccess = function(event) {
     };
 
     request.onerror = function(event) {
-        console.error('Error loading formations:', event.target.error);
+        console.error('formations 로드 중 오류:', event.target.error);
     };
 };
 
@@ -244,15 +276,19 @@ function fetchChampionData() {
 // Save Memo
 function saveMemo(championId, memo) {
     if (!db) {
-        alert('Database is not initialized.');
+        alert('데이터베이스가 초기화되지 않았습니다.');
         return;
     }
     const transaction = db.transaction(['memos'], 'readwrite');
     const store = transaction.objectStore('memos');
     store.put({ championId: championId, memoContent: memo.memoContent });
-    populateMemoChampionDropdown($('#memo-champion-dropdown'));
     alert('챔프 메모 저장완료.');
+
+    // 드롭다운 메뉴 업데이트 (메인 및 모달)
+    populateMemoChampionDropdown($('#memo-champion-dropdown-main'));
+    populateMemoChampionDropdown($('#memo-champion-dropdown-modal'));
 }
+
 
 // Load Memo
 function loadMemo(championId, callback) {
@@ -271,6 +307,7 @@ function loadMemo(championId, callback) {
 }
 
 // Save Formation
+// Function: saveFormation (드롭다운 업데이트 추가)
 function saveFormation() {
     const myTeamContainer = $('#my-team').find('.team');
     const enemyTeamContainer = $('#enemy-team').find('.team');
@@ -294,21 +331,23 @@ function saveFormation() {
         formationMemos[key] = memoContent;
 
         if (!db) {
-            alert('Database is not initialized.');
+            alert('데이터베이스가 초기화되지 않았습니다.');
             return;
         }
 
         const transaction = db.transaction(['formations'], 'readwrite');
         const store = transaction.objectStore('formations');
         store.put({ key: key, memoContent: memoContent });
-	populateFormationDropdown($('#formation-dropdown'));
 
         transaction.oncomplete = function() {
             alert('구도 저장이 완료되었습니다.');
+            // 구도 드롭다운 업데이트 (메인 및 모달)
+            populateFormationDropdown($('#formation-dropdown-main'));
+            populateFormationDropdown($('#formation-dropdown-modal'));
         };
 
         transaction.onerror = function(event) {
-            console.error('Error saving formation:', event.target.error);
+            console.error('구도 저장 오류:', event.target.error);
             alert('구도 저장에 실패했습니다.');
         };
     } else {
@@ -386,7 +425,7 @@ function exportData() {
 
     // IndexedDB에서 모든 챔피언 메모 가져오기
     if (!db) {
-        alert('데이터베이스가 초기화되지 않았습니다.');
+        
         return;
     }
 
@@ -545,7 +584,7 @@ function exportDataToClipboard() {
 
     // IndexedDB에서 모든 챔피언 메모 가져오기
     if (!db) {
-        alert('데이터베이스가 초기화되지 않았습니다.');
+        
         return;
     }
 
@@ -614,7 +653,7 @@ function exportDataAsUrl() {
 
     // IndexedDB에서 모든 챔피언 메모 가져오기
     if (!db) {
-        alert('데이터베이스가 초기화되지 않았습니다.');
+        
         return;
     }
 

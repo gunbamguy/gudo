@@ -3,16 +3,76 @@
 // Editor Initialization and Event Handlers
 
 $(document).ready(function() {
+	
+	   const memoChampionDropdownMain = $('#memo-champion-dropdown');
+    const formationDropdownMain = $('#formation-dropdown');
 
-    $('#import-file-input').on('change', importData);
+    // 모달 내 드롭다운
+    const memoChampionDropdownModal = $('#memo-champion-dropdown-modal');
+    const formationDropdownModal = $('#formation-dropdown-modal');
+
+    // 메인 드롭다운에 변경 이벤트 바인딩
+    memoChampionDropdownMain.on('change', function() {
+        const selectedChampionId = $(this).val();
+        if (selectedChampionId) {
+            // 내 팀의 첫 번째 슬롯에 챔피언 설정
+            const myTeamContainer = $('#my-team').find('.team');
+            const firstSlot = myTeamContainer.children().eq(0)[0];
+            setChampionToSlot(firstSlot, selectedChampionId);
+            // 모달 닫기 (열려 있다면)
+            $('#champion-selection').hide();
+        }
+    });
+
+    formationDropdownMain.on('change', function() {
+        const selectedKey = $(this).val();
+        if (selectedKey) {
+            // 구도를 로드하고 챔피언 슬롯 설정
+            loadFormation(selectedKey);
+            // 모달 닫기 (열려 있다면)
+            $('#champion-selection').hide();
+        }
+    });
+
+    // 모달 내 드롭다운에 변경 이벤트 바인딩
+    memoChampionDropdownModal.on('change', function() {
+        const selectedChampionId = $(this).val();
+        if (selectedChampionId) {
+            // 내 팀의 첫 번째 슬롯에 챔피언 설정
+            const myTeamContainer = $('#my-team').find('.team');
+            const firstSlot = myTeamContainer.children().eq(0)[0];
+            setChampionToSlot(firstSlot, selectedChampionId);
+            // 모달 닫기
+            $('#champion-selection').hide();
+        }
+    });
+
+    formationDropdownModal.on('change', function() {
+        const selectedKey = $(this).val();
+        if (selectedKey) {
+            // 구도를 로드하고 챔피언 슬롯 설정
+            loadFormation(selectedKey);
+            // 모달 닫기
+            $('#champion-selection').hide();
+        }
+    });
+
+    // 초기 드롭다운 메뉴 초기화
+    populateMemoChampionDropdown(memoChampionDropdownMain);
+    populateFormationDropdown(formationDropdownMain);
+
+    populateMemoChampionDropdown(memoChampionDropdownModal);
+    populateFormationDropdown(formationDropdownModal);
+
+	
+	    $('#import-file-input').on('change', importData);
 
     // import-data-button 클릭 시 파일 선택창 열리도록 설정
     $('#import-data-button').on('click', function() {
         $('#import-file-input').click();
     });
      //드롭 다운 메뉴 정보갱신
-    populateMemoChampionDropdown($('#memo-champion-dropdown'));
-    populateFormationDropdown($('#formation-dropdown'));
+    
 	
 	const urlParams = new URLSearchParams(window.location.search);
     const base64Data = urlParams.get('data');
@@ -136,36 +196,7 @@ $(document).ready(function() {
         }
     });
 
-    // 스킬 버튼 생성 함수
-    function createSkillButton(context, skillKey) {
-        var ui = $.summernote.ui;
-        var button = ui.button({
-            contents: `<span>${skillKey}</span>`,
-            tooltip: `Insert Skill ${skillKey}`,
-            click: function() {
-                const championId = currentChampionId; // 선택된 챔피언 ID를 가져옵니다.
-                if (!championId) {
-                    alert('챔피언이 선택되지 않았습니다.');
-                    return;
-                }
-                
-                fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion/${championId}.json`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const champion = data.data[championId];
-                        const skillIndex = ['Q', 'W', 'E', 'R'].indexOf(skillKey);
-                        if (skillIndex !== -1 && champion.spells[skillIndex]) {
-                            var skill = champion.spells[skillIndex];
-                            var imgUrl = `https://ddragon.leagueoflegends.com/cdn/${version}/img/spell/${skill.image.full}`;
-                            context.invoke('editor.pasteHTML', imgUrl); // 이미지 URL을 에디터에 삽입
-                        }
-                    })
-                    .catch(error => console.error('챔피언 데이터 로드 실패:', error));
-            }
-        });
-        return button.render();
-    }
-
+   
     // 스킬 버튼 생성 함수
     function createSkillButton(context, skillKey) {
         var ui = $.summernote.ui;
@@ -359,6 +390,12 @@ function deleteAllData() {
     // 메모 데이터 초기화
     formationMemos = {};
 
+    // 드롭다운 메뉴 업데이트 (메인 및 모달)
+    populateMemoChampionDropdown($('#memo-champion-dropdown-main'));
+    populateFormationDropdown($('#formation-dropdown-main'));
+    populateMemoChampionDropdown($('#memo-champion-dropdown-modal'));
+    populateFormationDropdown($('#formation-dropdown-modal'));
+
     alert('모든 데이터가 삭제되었습니다.');
 }
 
@@ -368,4 +405,133 @@ function enableMemo(championId) {
     loadMemo(championId, function(memo) {
         $('#editor').summernote('code', memo.memoContent || '');
     });
+}
+
+
+
+// Function: loadFormation
+function loadFormation(selectedKey) {
+    const transaction = db.transaction(['formations'], 'readonly');
+    const store = transaction.objectStore('formations');
+    const request = store.get(selectedKey);
+
+    request.onsuccess = function(event) {
+        const formation = event.target.result;
+        if (formation) {
+            // 구도 메모 내용 설정
+            $('#formation-editor').summernote('code', formation.memoContent);
+
+            // 챔피언 슬롯 설정
+            const myTeamMatch = selectedKey.match(/my:([^_]+)_enemy:([^_]+)/);
+            if (myTeamMatch) {
+                const myChampions = myTeamMatch[1].split('-');
+                const enemyChampions = myTeamMatch[2].split('-');
+
+                const myTeamContainer = $('#my-team').find('.team');
+                const enemyTeamContainer = $('#enemy-team').find('.team');
+
+                myTeamContainer.children().each(function(index) {
+                    if (myChampions[index]) {
+                        setChampionToSlot(this, myChampions[index]);
+                    } else {
+                        $(this).empty();
+                    }
+                });
+
+                enemyTeamContainer.children().each(function(index) {
+                    if (enemyChampions[index]) {
+                        setChampionToSlot(this, enemyChampions[index]);
+                    } else {
+                        $(this).empty();
+                    }
+                });
+            }
+
+            // 드롭다운 선택 복원 (메인 및 모달)
+            $('#formation-dropdown-main').val(selectedKey);
+            $('#formation-dropdown-modal').val(selectedKey);
+        }
+    };
+
+    request.onerror = function(event) {
+        console.error('구도 메모 로드 오류:', event.target.error);
+    };
+}
+
+// Function: populateMemoChampionDropdown (중복 이벤트 방지 수정)
+function populateMemoChampionDropdown(dropdown) {
+    if (!db) {
+        return;
+    }
+
+    const transaction = db.transaction(['memos'], 'readonly');
+    const store = transaction.objectStore('memos');
+    const request = store.getAll();
+
+    request.onsuccess = function(event) {
+        const memos = event.target.result;
+
+        // 기존 옵션 제거
+        dropdown.empty();
+
+        // 기본 옵션 추가
+        dropdown.append($('<option>', { value: '', text: '챔피언 메모 선택' }));
+
+        memos.forEach(memo => {
+            const championId = memo.championId;
+            const championName = championList[championId] ? championList[championId].name : championId;
+            const option = $('<option>', { value: championId, text: championName });
+            dropdown.append(option);
+        });
+    };
+
+    request.onerror = function(event) {
+        console.error('챔피언 메모 불러오기 오류:', event.target.error);
+    };
+}
+
+// Function: populateFormationDropdown (중복 이벤트 방지 수정)
+function populateFormationDropdown(dropdown) {
+    if (!db) {
+        return;
+    }
+
+    const transaction = db.transaction(['formations'], 'readonly');
+    const store = transaction.objectStore('formations');
+    const request = store.getAll();
+
+    request.onsuccess = function(event) {
+        const formations = event.target.result;
+
+        // 기존 옵션 제거
+        dropdown.empty();
+
+        // 기본 옵션 추가
+        dropdown.append($('<option>', { value: '', text: '구도 메모 선택' }));
+
+        formations.forEach(formation => {
+            const key = formation.key;
+            // 키에서 챔피언 ID 추출
+            const myTeamMatch = key.match(/my:([^_]+)_enemy:([^_]+)/);
+            if (myTeamMatch) {
+                const myChampions = myTeamMatch[1].split('-');
+                const enemyChampions = myTeamMatch[2].split('-');
+
+                // 첫 번째 챔피언 이름 가져오기
+                const myChampionId = myChampions[0];
+                const enemyChampionId = enemyChampions[0];
+
+                const myChampionName = championList[myChampionId] ? championList[myChampionId].name : myChampionId;
+                const enemyChampionName = championList[enemyChampionId] ? championList[enemyChampionId].name : enemyChampionId;
+
+                const optionText = `${myChampionName} vs ${enemyChampionName}`;
+                const option = $('<option>', { value: key, text: optionText });
+                dropdown.append(option);
+            }
+        });
+    };
+
+    request.onerror = function(event) {
+        console.error('구도 메모 불러오기 오류:', event.target.error);
+    };
 }
