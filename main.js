@@ -45,7 +45,6 @@ $(document).ready(function() {
     $('#delete-memory-button').on('click', function() {
         if (confirm('현재 챔프 데이터 삭제하시겠습니까?')) {
             deleteAllData();
-            alert('챔프 데이터 삭제되었습니다.');
         } else {
             alert('삭제가 취소되었습니다.');
         }
@@ -328,12 +327,7 @@ $(document).ready(function() {
 
     $('#save-formation-button').on('click', saveFormation);
 	
-	// export-url-button 클릭 핸들러 수정
-$('#export-url-button').on('click touchstart', function() {
-    exportDataAsUrl();
-});
 
-			
 
 // 모든 메모리와 인덱스 데이터베이스 삭제 함수
 function deleteAllData() {
