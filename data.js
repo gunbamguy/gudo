@@ -12,6 +12,12 @@ const dbRequest = indexedDB.open('ChampionMemoDB', 3);
 
 
 $(document).ready(function() {
+	    $('#export-data-button').on('click', exportData);
+    $('#import-data-button').on('click', function() {
+        $('#import-file-input').click();
+    });
+    $('#import-file-input').on('change', importData);
+    $('#copy-stats-button').on('click', copyStats);
 
 
 // 스탯 내보내기 버튼 이벤트 핸들러 수정 (모달 창을 화면 상단으로 이동하고 내보내기 데이터 정렬)
@@ -755,3 +761,10 @@ function fetchChampionDataByIds(champIds) {
 }
 
 
+function copyStats() {
+    console.log('스탯 내보내기 버튼 클릭됨');
+}
+
+function insertImage() {
+    console.log('이미지 삽입 버튼 클릭됨');
+}

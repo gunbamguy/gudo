@@ -1,4 +1,4 @@
-// ui.js
+// ui.js// ui.js
 
 // UI-related variables
 let selectedSlot = null;
@@ -8,38 +8,53 @@ const MAX_SLOTS = 5;
 const roles = ['탑', '정글', '미드', '원딜', '서폿'];
 
 // Document Ready
+
+
 $(document).ready(function() {
-    // Event Listeners
+    // main-container 또는 popup.html의 관련 요소가 존재할 때만 초기화
+    if ($('#main-container').length || $('#main-popup-container').length) {
+        // 슬롯 추가/제거 버튼 이벤트 리스너
+        $('#add-slot-button').on('click', addSlots);
+        $('#remove-slot-button').on('click', removeSlots);
 
+        // 챔피언 선택 버튼 이벤트 리스너
+        $('#select-champion-button').on('click', function() {
+            if (window.myTeamSlots > 0) {
+                selectedSlot = $('#my-team').find('.team').children().eq(0)[0];
+                displayRoleSelection();
+            }
+        });
 
-    $('#add-slot-button').on('click', addSlots);
-    $('#remove-slot-button').on('click', removeSlots);
-    $('#select-champion-button').on('click', function() {
-        if (myTeamSlots > 0) {
-            selectedSlot = $('#my-team').find('.team').children().eq(0)[0];
-            displayRoleSelection();
+        // 모달 닫기 버튼 이벤트 리스너
+        $('#close-modal-button').on('click', function() {
+            $('#champion-selection').hide();
+        });
+
+        // 드래그 초기화
+        if ($('#vertical-divider-right').length) {
+            initializeVerticalDrag();
         }
-    });
-    $('#close-modal-button').on('click', function() {
-        $('#champion-selection').hide();
-    });
-    
 
+        if ($('#horizontal-divider').length) {
+            initializeHorizontalDrag();
+        }
 
-    // Initialize Drags
-    initializeVerticalDrag();
-    initializeHorizontalDrag();
-    $('#save-formation-button').appendTo('#formation-container');
+        if ($('#save-formation-button').length) {
+            $('#save-formation-button').appendTo('#formation-container');
+        }
 
-    // Load Initial Data
-    fetchChampionData();
-	
+        // 초기 데이터 로드
+        fetchChampionData();
+    }
 });
 
 // Initialize Vertical Drag
-// Initialize Vertical Drag
 function initializeVerticalDrag() {
     const verticalDivider = document.getElementById('vertical-divider-right');
+    if (!verticalDivider) {
+        console.warn('vertical-divider-right 요소를 찾을 수 없습니다.');
+        return;
+    }
     let isDragging = false;
 
     verticalDivider.addEventListener('mousedown', function(e) {
@@ -50,24 +65,70 @@ function initializeVerticalDrag() {
     document.addEventListener('mousemove', function(e) {
         if (!isDragging) return;
 
-        const containerWidth = document.getElementById('split-container').clientWidth;
+        const splitContainer = document.getElementById('split-container');
+        if (!splitContainer) return;
+
+        const containerWidth = splitContainer.clientWidth;
         let newWidth = e.clientX - verticalDivider.offsetWidth / 2;
 
-        // Set minimum and maximum width for responsiveness
-        const minWidth = containerWidth * 0.2; // 20% of the container width
-        const maxWidth = containerWidth * 0.8; // 80% of the container width
+        // 반응형을 위한 최소/최대 너비 설정
+        const minWidth = containerWidth * 0.2; // 컨테이너 너비의 20%
+        const maxWidth = containerWidth * 0.8; // 컨테이너 너비의 80%
 
         if (newWidth < minWidth) newWidth = minWidth;
         if (newWidth > maxWidth) newWidth = maxWidth;
 
-        document.getElementById('main-container').style.width = `${newWidth}px`;
-        document.getElementById('memo-container').style.width = `${containerWidth - newWidth - verticalDivider.offsetWidth}px`;
+        const mainContainer = document.getElementById('main-container');
+        const memoContainer = document.getElementById('memo-container');
+        if (mainContainer && memoContainer) {
+            mainContainer.style.width = `${newWidth}px`;
+            memoContainer.style.width = `${containerWidth - newWidth - verticalDivider.offsetWidth}px`;
+        }
     });
 
     document.addEventListener('mouseup', function() {
         isDragging = false;
     });
 }
+
+// Initialize Horizontal Drag
+function initializeHorizontalDrag() {
+    const horizontalDivider = document.getElementById('horizontal-divider');
+    if (!horizontalDivider) {
+        console.warn('horizontal-divider 요소를 찾을 수 없습니다.');
+        return;
+    }
+    let isDragging = false;
+
+    horizontalDivider.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        isDragging = true;
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+
+        const topContainer = document.getElementById('top-container');
+        if (!topContainer) return;
+
+        const containerHeight = topContainer.clientHeight;
+        let newHeight = e.clientY - horizontalDivider.offsetHeight / 2;
+
+        // 반응형을 위한 최소/최대 높이 설정
+        const minHeight = containerHeight * 0.2; // 컨테이너 높이의 20%
+        const maxHeight = containerHeight * 0.8; // 컨테이너 높이의 80%
+
+        if (newHeight < minHeight) newHeight = minHeight;
+        if (newHeight > maxHeight) newHeight = maxHeight;
+
+        topContainer.style.height = `${newHeight}px`;
+    });
+
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+    });
+}
+
 
 
 // Initialize Horizontal Drag
@@ -121,17 +182,142 @@ function displayRoleSelection() {
     roleSelectionDiv.append(allButton);
 
     modalContent.append('<h2>챔피언 선택</h2>');
+
+    // 검색창 추가
+    const searchInput = $('<input>', {
+        type: 'text',
+        id: 'champion-search',
+        placeholder: '챔피언 이름 검색',
+        css: {
+            marginBottom: '10px',
+            padding: '5px',
+            width: '95%'
+        }
+    });
+    modalContent.append(searchInput);
+
+    const championListDiv = $('<div>', { id: 'champion-list' });
+    modalContent.append(championListDiv);
+
+    // 검색 기능 구현
+    $('#champion-search').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        $('.champion-button').each(function() {
+            const championName = $(this).text().toLowerCase();
+            if (championName.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    const closeButton = $('<button>', {
+        text: 'X',
+        click: () => modal.hide()
+    });
+    modalContent.append(closeButton);
+
+    // 챔피언 데이터를 표시
+    displayChampionList('전체');
+}
+
+function displayRoleSelection() {
+    const modal = $('#champion-selection');
+    modal.show();
+
+    const modalContent = modal.find('.modal-content');
+    modalContent.empty(); // 기존 내용을 비웁니다.
+
+    // 드롭다운 메뉴 생성
+    const memoChampionDropdownLabel = $('<label>', { text: '저장된 챔피언 메모: ' });
+    const memoChampionDropdown = $('<select>', { id: 'memo-champion-dropdown' });
+
+    const formationDropdownLabel = $('<label>', { text: '저장된 구도 메모: ' });
+    const formationDropdown = $('<select>', { id: 'formation-dropdown' });
+
+    // 드롭다운 메뉴를 모달에 추가
+    modalContent.append(memoChampionDropdownLabel, memoChampionDropdown, formationDropdownLabel, formationDropdown);
+
+    // 저장된 챔피언 메모 불러오기
+    populateMemoChampionDropdown(memoChampionDropdown);
+
+    // 저장된 구도 메모 불러오기
+    populateFormationDropdown(formationDropdown);
+
+    // 기존 역할 선택 및 챔피언 선택 UI 추가
+    modalContent.append('<h2>역할 선택</h2>');
+    const roleSelectionDiv = $('<div>', { id: 'role-selection' });
+    modalContent.append(roleSelectionDiv);
+
+    roles.forEach(role => {
+        const roleButton = $('<button>', {
+            text: role,
+            css: { margin: '5px' },
+            click: () => displayChampionList(role)
+        });
+        roleSelectionDiv.append(roleButton);
+    });
+
+    const allButton = $('<button>', {
+        text: '전체',
+        css: { margin: '5px' },
+        click: () => displayChampionList('전체')
+    });
+    roleSelectionDiv.append(allButton);
+
+    // 챔피언 검색 입력 필드 추가
+    const searchInput = $('<input>', {
+        type: 'text',
+        id: 'champion-search',
+        placeholder: '챔피언 이름 검색',
+        css: {
+            marginBottom: '10px',
+            padding: '5px',
+            width: '95%'
+        }
+    });
+    modalContent.append(searchInput);
+
+    modalContent.append('<h2>챔피언 선택</h2>');
     const championListDiv = $('<div>', { id: 'champion-list' });
     modalContent.append(championListDiv);
 
     const closeButton = $('<button>', {
-        text: '닫기',
-        click: () => modal.hide()
-    });
+    text: '닫기',
+    css: {
+        position: 'absolute',
+        top: '10px',  // 모달의 상단으로부터 10px
+        right: '10px',  // 모달의 오른쪽으로부터 10px
+        padding: '5px 10px',
+        cursor: 'pointer',
+        backgroundColor: '#d9534f',  // 버튼 색상 (예: 빨간색)
+        color: '#fff',
+        border: 'none',
+        borderRadius: '4px'
+    },
+    click: () => modal.hide()
+});
+
     modalContent.append(closeButton);
+
+    // 챔피언 목록 표시 함수 호출
+    displayChampionList('전체');
+
+    // 검색 기능 구현
+    $('#champion-search').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        $('.champion-button').each(function() {
+            const championName = $(this).find('span').text().toLowerCase();
+            if (championName.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
 }
 
-// Display Champion List
 function displayChampionList(role) {
     const championListDiv = $('#champion-list');
     championListDiv.empty();
@@ -147,6 +333,7 @@ function displayChampionList(role) {
 
     champions.forEach(champion => {
         const champButton = $('<button>', {
+            class: 'champion-button',
             css: { 
                 display: 'flex', 
                 flexDirection: 'column', 

@@ -1,4 +1,6 @@
 $(document).ready(function() {
+	
+	$('#insert-image-button').on('click', insertImage);
   // 버튼 추가
   $('#memo-container').append(`
     <div class="btn-group" style="display: flex; justify-content: center; margin-top: 10px;">

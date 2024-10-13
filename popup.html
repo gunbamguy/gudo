@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 컨테이너 팝업</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Summernote CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.css" rel="stylesheet">
+    <!-- External CSS File -->
+    <link href="style.css" rel="stylesheet">
+    <style>
+        /* 팝업 창의 추가 스타일 */
+        body  {
+    overflow-y: scroll; /* 페이지가 스크롤되도록 설정 */
+    scrollbar-width: thin; /* 스크롤바 너비 설정 (Firefox용) */
+    scrollbar-color: #888 #f1f1f1; /* 스크롤바 색상 설정 (Firefox용) */
+}
+
+body, html {
+    display: flex;
+    flex-direction: column; /* 요소를 세로 방향으로 쌓기 */
+    justify-content: flex-start; /* 상단에 배치 */
+    align-items: center; /* 수평 중앙 정렬 */
+    height: 100vh; /* 화면 높이를 100%로 설정 */
+    margin: 0;
+    padding: 0;
+}
+
+/* 스크롤바 스타일 (Chrome, Edge, Safari용) */
+body::-webkit-scrollbar {
+    width: 12px; /* 스크롤바 너비 설정 */
+}
+
+body::-webkit-scrollbar-track {
+    background: #f1f1f1; /* 스크롤바 트랙 배경 색상 */
+}
+
+body::-webkit-scrollbar-thumb {
+    background-color: #888; /* 스크롤바 색상 */
+    border-radius: 10px; /* 스크롤바 모서리 둥글게 설정 */
+    border: 3px solid #f1f1f1; /* 스크롤바 주위의 여백 */
+}
+
+body::-webkit-scrollbar-thumb:hover {
+    background: #555; /* 스크롤바 마우스 오버 시 색상 */
+}
+		#champion-info img {
+    display: none;
+}
+#champion-selection .modal-content {
+    position: relative;
+    padding: 20px;
+}
+
+#champion-search {
+    margin-bottom: 20px;
+    padding: 10px;
+    width: calc(100% - 20px);
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+.button-container {
+    display: flex; /* 버튼들을 수평으로 정렬 */
+    align-items: center; /* 수직 가운데 정렬 */
+    justify-content: center; /* 수평 가운데 정렬 */
+    gap: 10px; /* 버튼들 사이 간격 */
+
+    /* main-container 내부에서 맨 위 중앙에 위치하도록 설정 */
+    position: relative;
+    margin: 20px auto 0; /* 위쪽 여백 설정, auto로 가로 중앙 정렬 */
+}
+
+.comparison-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    width: 100%;
+    gap: 50px; /* 버튼들 사이 간격 추가 */
+}
+
+#team-slots {
+    display: flex;
+    justify-content: center; /* 수평 중앙 정렬 */
+    align-items: center;
+    flex-direction: row; /* 내 팀과 상대 팀을 가로로 배치 */
+    gap: 50px; /* 내 팀과 상대 팀 사이 간격 */
+    width: 100%; /* 부모 요소 너비 설정 */
+}
+
+.team-container {
+    display: flex;
+    flex-direction: column; /* 슬롯을 세로로 배치 */
+    align-items: center; /* 팀 슬롯 내에서 중앙 정렬 */
+    text-align: center;
+}
+
+#comparison-buttons {
+    display: flex;
+    justify-content: center; /* 비교 버튼을 수평 중앙에 정렬 */
+    margin-top: 20px; /* 위쪽 여백 */
+}
+
+
+
+
+    </style>
+</head>
+<body>
+    <div id="main-popup-container">
+        <!-- 팝업 창에서 사용할 메인 컨테이너의 HTML 구조 -->
+        
+<div class="button-container">
+    <div class="slot-buttons">
+        <button id="add-slot-button">+</button>
+        <button id="remove-slot-button">-</button>
+    </div>
+
+    <div class="data-buttons">
+        <button id="copy-stats-button">스탯 보기</button>
+        <input type="file" id="import-file-input" style="display:none;" accept=".txt">
+    </div>
+</div>
+
+        <!-- 챔피언 선택 모달 -->
+        <div id="champion-selection" class="modal">
+            <div class="modal-content">
+                <h2>챔피언 선택</h2>
+                <div id="role-selection">
+                    <!-- 역할 버튼들이 여기에 생성됩니다 -->
+                </div>
+				
+                <div id="champion-list">
+                    <!-- 챔피언 리스트가 여기에 생성됩니다 -->
+                </div>
+                <button id="close-modal-button">닫기</button>
+            </div>
+        </div>
+
+        <!-- 팀 슬롯 -->
+        <div id="team-slots">
+            <div id="my-team" class="team-container">
+                <h3>내 팀</h3>
+                <div class="team">
+                    <!-- 내 팀 슬롯이 여기에 동적으로 추가됨 -->
+                </div>
+            </div>
+            <div id="enemy-team" class="team-container">
+                <h3>상대 팀</h3>
+                <div class="team">
+                    <!-- 상대 팀 슬롯이 여기에 동적으로 추가됨 -->
+                </div>
+            </div>
+            <!-- 비교 버튼을 표시할 위치 -->
+            <div id="comparison-buttons" class="comparison-container">
+                <!-- 비교 버튼이 여기에 동적으로 추가됨 -->
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- 챔피언 정보 표시 영역 -->
+    <div id="champion-info">
+        <!-- 선택한 챔피언 정보가 여기에 표시됩니다 -->
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- External JavaScript Files -->
+    <script src="common.js"></script> <
+	<script src="popup.js"></script>
+    <script src="data.js"></script>
+    <script src="main.js"></script>
+    <script src="ui.js"></script>
+    <script src="folder.js"></script>
+    <script src="imageinsert.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <!-- Summernote JS -->
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.js"></script>
+    <!-- Summernote Korean Language Pack -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/lang/summernote-ko-KR.min.js"></script>
+
+
+    <!-- Popup 관련 JavaScript -->
+<script>
+$(document).ready(function() {
+    $('.champion-item').on('click', function() {
+        const championId = $(this).data('champion-id');
+        loadChampionInfo(championId);
+    });
+});
+</script>
+<script>function loadChampionInfo(championId) {
+    // 챔피언 데이터 가져오기 (예: 데이터 객체에서 찾기)
+    const championData = getChampionDataById(championId);
+
+    // 챔피언 정보가 표시될 영역에 데이터 추가
+    if (championData) {
+        $('#champion-info').html(`
+            <h3>${championData.name}</h3>
+            <p>${championData.description}</p>
+            <ul>
+                <li>Cooldown: ${championData.cooldown}</li>
+                <li>Range: ${championData.range}</li>
+                <li>Damage: ${championData.damage}</li>
+            </ul>
+        `);
+    } else {
+        $('#champion-info').html(`<p>챔피언 정보를 불러오지 못했습니다.</p>`);
+    }
+}
+</script>
+
+</body>
+</html>

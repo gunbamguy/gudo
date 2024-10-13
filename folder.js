@@ -1,10 +1,44 @@
 // folder.js
+// folder.js
 
 let directoryHandle = null;
 
-document.getElementById('set-folder-button').addEventListener('click', setFolder);
-document.getElementById('open-folder-button').addEventListener('click', openFolder);
-document.getElementById('load-default-button').addEventListener('click', loadDefault);
+// 요소 존재 여부 확인 후 이벤트 리스너 추가
+const setFolderButton = document.getElementById('set-folder-button');
+const openFolderButton = document.getElementById('open-folder-button');
+const loadDefaultButton = document.getElementById('load-default-button');
+
+if (setFolderButton) {
+    setFolderButton.addEventListener('click', setFolder);
+}
+
+if (openFolderButton) {
+    openFolderButton.addEventListener('click', openFolder);
+}
+
+if (loadDefaultButton) {
+    loadDefaultButton.addEventListener('click', loadDefault);
+}
+
+// 폴더 설정 함수
+function setFolder() {
+    // 폴더 설정 로직
+    console.log('폴더 설정 버튼 클릭됨');
+}
+
+// 폴더 열기 함수
+function openFolder() {
+    // 폴더 열기 로직
+    console.log('폴더 열기 버튼 클릭됨');
+}
+
+// 기본값 로드 함수
+function loadDefault() {
+    // 기본값 로드 로직
+    console.log('기본값 로드 버튼 클릭됨');
+}
+
+// ... (나머지 folder.js 내용 동일하게 유지)
 
 async function setFolder() {
     try {

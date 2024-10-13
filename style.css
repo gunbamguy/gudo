@@ -893,3 +893,153 @@ body.dark-mode {
     padding: 5px;
     margin-bottom: 10px;
 }
+
+
+
+/* 드롭다운 컨테이너 스타일 */
+.dropdown-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap; /* 화면이 좁아질 경우 드롭다운이 아래로 내려오도록 설정 */
+}
+
+/* 각 드롭다운 그룹 스타일 */
+.dropdown-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 200px; /* 최소 너비 설정 */
+}
+
+/* 드롭다운 레이블과 선택 박스 사이 간격 조정 */
+.dropdown-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+
+
+/* 모바일 반응형 조정 */
+@media (max-width: 768px) {
+    .dropdown-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media screen and (max-width: 600px) {
+  .navbar {
+    flex-direction: column; /* Flexbox를 사용하는 경우 */
+  }
+  .main-memo-champion-dropdown,
+  .main-formation-dropdown {
+    width: 100%;
+  }
+}
+
+/* 메뉴 스타일 */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-brand span {
+    color: #C92A2A;
+}
+
+.navbar-nav > li > a {
+    color: #fff;
+}
+
+.navbar-nav > li > a:hover,
+.navbar-nav > li > a:focus {
+    background-color: #444;
+    color: #fff;
+}
+
+.navbar-btn {
+    margin-right: 5px;
+}
+
+@media (max-width: 768px) {
+    .navbar-left,
+    .navbar-right {
+        float: none !important;
+        text-align: center;
+    }
+    .navbar-left .navbar-btn,
+    .navbar-right .navbar-btn {
+        display: inline-block;
+        margin-bottom: 5px;
+    }
+    .navbar-collapse {
+        text-align: center;
+    }
+    .navbar-nav {
+        margin: 0;
+    }
+    .navbar-nav > li {
+        display: inline-block;
+        float: none;
+    }
+    .navbar-nav > li > a,
+    .navbar-nav > li > button {
+        display: inline-block;
+    }
+}
+.navbar-link {
+    color: #d1180b !important;
+    text-decoration: underline !important;
+    font-weight: bold !important;
+    margin-left: 10px !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+
+    /* 기본적으로 모바일에서 수직으로 배치 */
+    #navbar-collapse .navbar-left select {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    /* 데스크톱에서만 수평으로 배치 */
+    @media (min-width: 768px) {
+        #navbar-collapse .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #navbar-collapse .navbar-left select {
+            width: 180px;
+            margin-bottom: 0;
+            display: inline-block;
+        }
+    }
+#memo-champion-dropdown,
+#formation-dropdown {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 180px;
+}
+
+.data-buttons {
+    display: flex;
+    justify-content: center; /* 버튼들을 수평 가운데 정렬 */
+    align-items: center; /* 수직 가운데 정렬 (필요시) */
+    width: 100%; /* 부모 요소의 너비를 100%로 설정 */
+    flex-wrap: wrap; /* 버튼들이 화면을 벗어나지 않도록 여러 줄로 배치 */
+    gap: 10px; /* 버튼 간의 간격 설정 */
+    padding: 10px 0; /* 버튼들을 둘러싼 여백 추가 */
+    box-sizing: border-box; /* 여백을 포함한 전체 크기 설정 */
+}
+
+@media (max-width: 768px) {
+    .data-buttons {
+        gap: 5px; /* 모바일에서는 간격을 조금 더 좁게 설정 */
+        padding: 5px 0; /* 여백을 더 줄임 */
+    }
+}

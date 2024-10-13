@@ -3,6 +3,27 @@
 // Editor Initialization and Event Handlers
 
 $(document).ready(function() {
+    // 메인 페이지에서만 실행되는 코드
+    if ($('#main-container').length) {
+        // 챔피언 선택 버튼 이벤트 리스너
+        $('#select-champion-button').on('click', function() {
+            displayRoleSelection();
+        });
+
+        // 닫기 버튼 이벤트 리스너
+        $('#close-modal-button').on('click', function() {
+            $('#champion-selection').hide();
+        });
+
+        // 초기 데이터 로드
+        fetchChampionData();
+    }
+
+    // 팝업 창에서만 실행되는 코드 (필요한 경우)
+    if (window.opener && window.opener !== window) {
+        // 팝업 창 관련 기능 초기화
+    }
+});
 
     // Event Listeners for the buttons
     $('#load-data-button').on('click', function() {
@@ -300,7 +321,7 @@ $(document).ready(function() {
 	
 	$('#export-url-button').on('click', function() {
                 exportDataAsUrl();
-            });
+            
 
             // 페이지가 로드될 때 URL에 데이터가 있으면 처리
         const urlParams = new URLSearchParams(window.location.search);
