@@ -3,6 +3,13 @@
 // Editor Initialization and Event Handlers
 
 $(document).ready(function() {
+
+    $('#import-file-input').on('change', importData);
+
+    // import-data-button 클릭 시 파일 선택창 열리도록 설정
+    $('#import-data-button').on('click', function() {
+        $('#import-file-input').click();
+    });
      //드롭 다운 메뉴 정보갱신
     populateMemoChampionDropdown($('#memo-champion-dropdown'));
     populateFormationDropdown($('#formation-dropdown'));
