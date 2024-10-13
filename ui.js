@@ -1192,7 +1192,7 @@ function generateExportData() {
 
 function populateMemoChampionDropdown(dropdown) {
     if (!db) {
-        alert('데이터베이스가 초기화되지 않았습니다.');
+        
         return;
     }
 
@@ -1235,7 +1235,7 @@ function populateMemoChampionDropdown(dropdown) {
 
 function populateFormationDropdown(dropdown) {
     if (!db) {
-        alert('데이터베이스가 초기화되지 않았습니다.');
+        
         return;
     }
 
