@@ -3,7 +3,9 @@
 // Editor Initialization and Event Handlers
 
 $(document).ready(function() {
-	
+     //드롭 다운 메뉴 정보갱신
+    populateMemoChampionDropdown($('#memo-champion-dropdown'));
+    populateFormationDropdown($('#formation-dropdown'));
 	
 	const urlParams = new URLSearchParams(window.location.search);
     const base64Data = urlParams.get('data');
