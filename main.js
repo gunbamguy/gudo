@@ -259,12 +259,7 @@ $(document).ready(function() {
 });
 
 
-    $('#export-data-button').on('click', exportData);
-    $('#import-data-button').on('click', function() {
-        $('#import-file-input').click();
-    });
-    $('#import-file-input').on('change', importData);
-    // Initialize Summernote Editor (Champion Memo)
+    
     $('#editor').summernote({
         height: 'auto',
         minHeight: 150,
