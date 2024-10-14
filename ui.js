@@ -276,6 +276,9 @@ function displayChampionList(role) {
         });
     }
 
+    // 챔피언 이름을 기준으로 한글 가나다 순으로 정렬
+    champions.sort((a, b) => a.name.localeCompare(b.name, 'ko-KR'));
+
     champions.forEach(champion => {
         const champButton = $('<button>', {
             class: 'champion-button',
