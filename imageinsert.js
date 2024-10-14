@@ -173,7 +173,7 @@ function displayItemSelectionModal(category) {
 
     // 비교 표 컨테이너
     const comparisonTableContainer = $('<div>', { id: 'comparison-table-container' });
-    comparisonTableContainer.append('<h3>아이템 능력치 비교</h3>');
+    comparisonTableContainer.append('<h3>아이템 비교(여러개면 맨앞꺼)</h3>');
     const comparisonTable = $('<table>', { id: 'comparison-table' });
     comparisonTableContainer.append(comparisonTable);
 
