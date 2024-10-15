@@ -481,14 +481,28 @@ function addSelectedItem(item, selectedItemsDiv) {
 
 function renderSelectedItems(container) {
     container.empty();
-    container.append('<h3>선택된 아이템</h3>');
+    container.append('<h3>선택</h3>');
     AppState.selectedItemsData.forEach(item => {
         const selectedItem = $('<div>', {
             class: 'selected-item',
-            'data-id': item.id
+            'data-id': item.id,
+            style: 'text-align: center;' // 이미지와 텍스트를 중앙 정렬
         });
 
-        const itemName = $('<span>', { text: item.name });
+        // 아이템 이미지를 추가합니다.
+        const itemImg = $('<img>', {
+            src: `https://ddragon.leagueoflegends.com/cdn/${AppState.version}/img/item/${item.image.full}`,
+            alt: item.name,
+            width: '64',
+            height: '64',
+            style: 'object-fit: cover; border-radius: 4px; overflow: hidden;'
+        });
+
+        // 아이템 이름을 이미지 아래에 표시합니다.
+        const itemName = $('<div>', {
+            text: item.name,
+            style: 'margin-top: 8px;' // 이미지와 텍스트 간 간격을 조정
+        });
 
         const removeButton = $('<button>', {
             text: '−',
@@ -500,10 +514,12 @@ function renderSelectedItems(container) {
             }
         });
 
-        selectedItem.append(itemName, removeButton);
+        selectedItem.append(itemImg, itemName, removeButton);
         container.append(selectedItem);
     });
 }
+
+
 
 function updateAvailableStats() {
     AppState.availableStats.clear();
