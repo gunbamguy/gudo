@@ -846,7 +846,7 @@ function compareSlots(mySlotNumber, enemySlotNumber) {
 
         // 스탯 차트 생성
         new Chart(statCtx, {
-            type: 'radar',
+            type: 'bar',
             data: {
                 labels: statLabels,
                 datasets: statDatasets
