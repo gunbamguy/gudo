@@ -1,22 +1,18 @@
-// 전역 상태 관리 객체
-
 const AppState = {
     selectedItemsData: [],
-    version: null
+    version: null,
+    availableStats: new Set(),
 };
 
 $(document).ready(async function() {
     try {
-        // 데이터 드래곤 버전 설정
         AppState.version = await fetchDataDragonVersion();
         console.log("Data Dragon Version:", AppState.version);
 
-        // 룬 카테고리 버튼 이벤트 추가
         $('#select-rune-category-button').on('click', () => {
             displayCategorySelectionModal('룬 카테고리 선택', 'rune');
         });
 
-        // 아이템 카테고리 버튼 이벤트 추가
         $('#select-item-category-button').on('click', () => {
             displayCategorySelectionModal('아이템 카테고리 선택', 'item');
         });
@@ -26,20 +22,23 @@ $(document).ready(async function() {
     }
 });
 
-// 공통 모달 생성 함수
-function createModal(id, title) {
+function createModal(id, title, onClose) {
     const modal = $('<div>', { class: 'modal-modified', id: id });
     const modalContent = $('<div>', { class: 'modal-content-modified' });
 
     const closeButton = $('<button>', {
         text: '닫기',
         class: 'close-button',
-        click: () => modal.remove()
+        click: () => {
+            modal.remove();
+            if (typeof onClose === 'function') {
+                onClose();
+            }
+        }
     });
 
-    // **Added: Export Images Button**
     let exportButton;
-    if (id === 'item-selection-modal-modified') { // Only add to item selection modal
+    if (id === 'item-selection-modal-modified') {
         exportButton = $('<button>', {
             text: '이미지 내보내기',
             class: 'export-button',
@@ -50,8 +49,7 @@ function createModal(id, title) {
     }
 
     const modalTitle = $('<h2>', { text: title });
-    
-    // Append buttons
+
     if (exportButton) {
         modalContent.append(closeButton, exportButton, modalTitle);
     } else {
@@ -65,7 +63,6 @@ function createModal(id, title) {
     return modalContent;
 }
 
-// 카테고리 선택 모달 표시 함수
 function displayCategorySelectionModal(title, category) {
     const modalContent = createModal('category-selection-modal-modified', title);
     const categoryListDiv = $('<div>', { id: 'category-list-modified', class: 'category-list' });
@@ -79,7 +76,6 @@ function displayCategorySelectionModal(title, category) {
     modalContent.append(categoryListDiv);
 }
 
-// 룬 카테고리 로드 함수
 async function loadRuneCategories(container) {
     const apiUrl = `https://ddragon.leagueoflegends.com/cdn/${AppState.version}/data/ko_KR/runesReforged.json`;
 
@@ -102,7 +98,6 @@ async function loadRuneCategories(container) {
     }
 }
 
-// 아이템 카테고리 로드 함수
 function loadItemCategories(container) {
     const categories = ["공격력", "방어력", "마법", "기타"];
 
@@ -119,18 +114,14 @@ function loadItemCategories(container) {
     });
 }
 
-// 아이템 선택 모달 표시 함수
 function displayItemSelectionModal(category) {
-
     const modalContent = createModal('item-selection-modal-modified', `${category} 아이템 선택`);
-	resetItemSelection();
-    // 상단: 검색, 정렬 드롭다운 및 아이템 목록
+    resetItemSelection();
+
     const topContainer = $('<div>', { class: 'modal-top-container' });
 
-    // 왼쪽: 검색 및 아이템 목록
     const searchAndListContainer = $('<div>', { class: 'search-and-list-container' });
 
-    // 검색창 추가 (이벤트 핸들러 제거)
     const searchInput = $('<input>', {
         type: 'text',
         id: 'item-search-input',
@@ -138,117 +129,154 @@ function displayItemSelectionModal(category) {
         class: 'item-search-input'
     });
 
-    // 정렬 컨테이너
     const sortContainer = $('<div>', { class: 'sort-container' });
 
-    // 정렬 기준 드롭다운
+    // 수정된 정렬 드롭다운 생성 (능력치 기반으로 동적으로 작성)
+    const sortByLabel = $('<label>', { for: 'sort-by-select', text: '정렬 기준:' });
     const sortBySelect = $('<select>', { id: 'sort-by-select', class: 'sort-select' });
-    sortBySelect.append('<option value="name">이름</option>');
-    sortBySelect.append('<option value="FlatPhysicalDamageMod">공격력</option>');
-    sortBySelect.append('<option value="FlatMagicDamageMod">마법력</option>');
-    sortBySelect.append('<option value="FlatArmorMod">방어력</option>');
-    sortBySelect.append('<option value="FlatSpellBlockMod">마법 저항력</option>');
-    sortBySelect.append('<option value="FlatHPPoolMod">체력</option>');
-    sortBySelect.append('<option value="PercentCooldownMod">재사용 감소 (%)</option>');
+    // 초기 옵션으로 '선택 안함' 추가
+    sortBySelect.append('<option value="">선택 안함</option>');
 
-    // 정렬 순서 드롭다운
+    const sortOrderLabel = $('<label>', { for: 'sort-order-select', text: ' 정렬 순서:' });
     const sortOrderSelect = $('<select>', { id: 'sort-order-select', class: 'sort-select' });
     sortOrderSelect.append('<option value="asc">오름차순</option>');
     sortOrderSelect.append('<option value="desc">내림차순</option>');
 
-    sortContainer.append('<label for="sort-by-select">정렬 기준:</label>', sortBySelect, '<label for="sort-order-select">정렬 순서:</label>', sortOrderSelect);
+    sortContainer.append(sortByLabel, sortBySelect, sortOrderLabel, sortOrderSelect);
 
-    // 선택 가능한 아이템 목록
     const itemListDiv = $('<div>', { id: 'item-list-modified' });
 
-    // 왼쪽 컨테이너에 검색창, 정렬 컨테이너 및 아이템 목록 추가
     searchAndListContainer.append(searchInput, sortContainer, itemListDiv);
 
-    // 오른쪽: 선택된 아이템 및 비교 표
     const selectedAndComparisonContainer = $('<div>', { id: 'selected-and-comparison-container' });
 
-    // 선택된 아이템 목록
     const selectedItemsDiv = $('<div>', { id: 'selected-items' });
     selectedItemsDiv.append('<h3>선택된 아이템</h3>');
 
-    // 비교 표 컨테이너
     const comparisonTableContainer = $('<div>', { id: 'comparison-table-container' });
-    comparisonTableContainer.append('<h3>아이템 비교(여러개면 맨앞꺼)</h3>');
+    comparisonTableContainer.append('<h3>아이템 비교(가성비 높을수록좋음)</h3>');
     const comparisonTable = $('<table>', { id: 'comparison-table' });
     comparisonTableContainer.append(comparisonTable);
 
-    // 비교 그래프 컨테이너
     const comparisonGraphContainer = $('<div>', { id: 'comparison-graph-container' });
     const comparisonChartCanvas = $('<canvas>', { id: 'comparison-chart' });
     comparisonGraphContainer.append(comparisonChartCanvas);
 
-    // 오른쪽 컨테이너에 선택된 아이템과 비교 표 추가
     selectedAndComparisonContainer.append(selectedItemsDiv, comparisonTableContainer, comparisonGraphContainer);
 
-    // 상단 컨테이너에 좌우 추가
     topContainer.append(searchAndListContainer, selectedAndComparisonContainer);
 
-    // 모달 콘텐츠에 구성 요소 추가
     modalContent.append(topContainer);
 
-    // 아이템 리스트 로드 및 정렬 이벤트 핸들러 설정
-    loadItemsByCategory(category, itemListDiv, selectedItemsDiv, searchInput);
+    loadItemsByCategory(category, itemListDiv, selectedItemsDiv, searchInput, sortBySelect, sortOrderSelect);
 }
 
-// 카테고리에 따른 아이템 로드 함수
-let currentItemList = []; // 현재 표시 중인 아이템 리스트
-
-async function loadItemsByCategory(category, container, selectedItemsDiv, searchInput) {
+let currentItemList = [];
+async function loadItemsByCategory(category, container, selectedItemsDiv, searchInput, sortBySelect, sortOrderSelect) {
     const apiUrl = `https://ddragon.leagueoflegends.com/cdn/${AppState.version}/data/ko_KR/item.json`;
 
     try {
         const data = await fetchData(apiUrl);
         const items = data.data;
-        currentItemList = []; // 기존 리스트 초기화
+        currentItemList = [];
 
         for (const itemId in items) {
             const item = items[itemId];
-            item.id = itemId; // 아이템의 id를 설정합니다.
-            if (isItemInCategory(item, category)) {
+            item.id = itemId;
+
+            if (item.maps[11] && item.gold.purchasable && isItemInCategory(item, category)) {
+                // "description"에서 값 파싱
+                item.parsedDescription = parseStatsFromDescription(item.description);
                 currentItemList.push(item);
             }
         }
 
-        // 렌더링 함수 정의
+        // 사용 가능한 모든 능력치 수집
+        const availableStats = new Set();
+        currentItemList.forEach(item => {
+            if (item.parsedDescription) {
+                Object.keys(item.parsedDescription).forEach(stat => {
+                    if (stat !== 'descriptionText' && stat !== 'price') {
+                        availableStats.add(stat);
+                    }
+                });
+            }
+        });
+
+        // '가격'도 정렬 기준에 포함
+        availableStats.add('price');
+
+        // AppState에 업데이트
+        AppState.availableStats = availableStats;
+
+        // 정렬 드롭다운에 옵션 추가
+        sortBySelect.empty(); // 기존 옵션 제거
+        sortBySelect.append('<option value="">선택 안함</option>'); // 기본 옵션 추가
+
+        availableStats.forEach(statKey => {
+            const displayName = statDisplayNames[statKey] || statKey;
+            sortBySelect.append(`<option value="${statKey}">${displayName}</option>`);
+        });
+
         function renderItemList() {
             const searchQuery = searchInput.val().toLowerCase();
-            const sortBy = $('#sort-by-select').val();
-            const sortOrder = $('#sort-order-select').val();
+            const sortBy = sortBySelect.val();
+            const sortOrder = sortOrderSelect.val();
 
-            // 필터링된 리스트
-            let filteredList = currentItemList.filter(item => item.name.toLowerCase().includes(searchQuery));
+            let filteredList = currentItemList.filter(item => {
+                const itemName = item.name.toLowerCase();
+                const itemColloq = item.colloq ? item.colloq.toLowerCase() : "";
+                return itemName.includes(searchQuery) || itemColloq.includes(searchQuery);
+            });
 
-            // 정렬
             filteredList.sort((a, b) => {
+                if (!sortBy) {
+                    return 0; // 정렬 기준이 없으면 변경 없음
+                }
+
                 let aValue, bValue;
 
                 if (sortBy === 'name') {
+                    // 이름으로 정렬 (추가 옵션인 경우)
                     aValue = a.name.toLowerCase();
                     bValue = b.name.toLowerCase();
                     if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
                     if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
                     return 0;
+                } else if (sortBy === 'description') {
+                    // 설명으로 정렬 (추가 옵션인 경우)
+                    aValue = a.description.toLowerCase();
+                    bValue = b.description.toLowerCase();
+                    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+                    return 0;
+                } else if (sortBy === 'price') {
+                    // 가격으로 정렬
+                    aValue = a.gold ? a.gold.total || 0 : 0;
+                    bValue = b.gold ? b.gold.total || 0 : 0;
                 } else {
-                    aValue = a.stats[sortBy] || 0;
-                    bValue = b.stats[sortBy] || 0;
+                    // 능력치로 정렬
+                    aValue = a.parsedDescription && a.parsedDescription[sortBy] !== undefined ? a.parsedDescription[sortBy] : 0;
+                    bValue = b.parsedDescription && b.parsedDescription[sortBy] !== undefined ? b.parsedDescription[sortBy] : 0;
+                }
+
+                if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    aValue = aValue.toLowerCase();
+                    bValue = bValue.toLowerCase();
+                    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+                    return 0;
+                } else {
                     return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
                 }
             });
 
-            // 아이템 목록 비우기
             container.empty();
 
-            // 정렬된 아이템 추가
             filteredList.forEach(item => {
                 const itemButton = $('<button>', {
                     class: 'item-button',
                     click: function() {
-                        // 클릭 시 아이템 추가
                         addSelectedItem(item, selectedItemsDiv);
                     }
                 });
@@ -262,12 +290,11 @@ async function loadItemsByCategory(category, container, selectedItemsDiv, search
                 const itemName = $('<span>', { text: item.name });
                 itemButton.append(itemName);
 
-                // + 버튼
                 const addButton = $('<button>', {
                     text: '+',
                     class: 'add-button',
                     click: function(event) {
-                        event.stopPropagation(); // 이벤트 버블링 방지
+                        event.stopPropagation();
                         addSelectedItem(item, selectedItemsDiv);
                     }
                 });
@@ -277,18 +304,10 @@ async function loadItemsByCategory(category, container, selectedItemsDiv, search
             });
         }
 
-        // 초기 렌더링
         renderItemList();
-
-        // 정렬 이벤트 핸들러 설정
-        $('#sort-by-select, #sort-order-select').on('change', function() {
-            renderItemList();
-        });
-
-        // 검색 이벤트 핸들러 설정
-        searchInput.on('input', function() {
-            renderItemList();
-        });
+        sortBySelect.on('change', renderItemList);
+        sortOrderSelect.on('change', renderItemList);
+        searchInput.on('input', renderItemList);
 
     } catch (error) {
         console.error('아이템 데이터를 불러오는 중 오류 발생:', error);
@@ -296,107 +315,55 @@ async function loadItemsByCategory(category, container, selectedItemsDiv, search
     }
 }
 
+function parseStatsFromDescription(description) {
+    const stats = {};
 
+    // 모든 <태그>내용</태그> 형식의 데이터를 파싱
+    const tagPattern = /<[^>]+>/g;
+    let cleanedDescription = description.replace(tagPattern, '');
 
-async function loadItemsByCategory(category, container, selectedItemsDiv, searchInput) {
-    const apiUrl = `https://ddragon.leagueoflegends.com/cdn/${AppState.version}/data/ko_KR/item.json`;
+    // 정규식을 사용하여 "능력치 +숫자" 또는 "능력치 숫자%" 패턴 추출
+    const statPatterns = [
+        { regex: /공격력\s*\+?(\d+)/g, key: '공격력' },
+        { regex: /물리 관통력\s*\+?(\d+)/g, key: '물리 관통력' },
+        { regex: /마법 관통력\s*\+?(\d+)/g, key: '마법 관통력' },
+        { regex: /방어구 관통력\s*\+?(\d+)/g, key: '방어구 관통력' },
+        { regex: /방어력\s*\+?(\d+)/g, key: '방어력' },
+        { regex: /마법 저항력\s*\+?(\d+)/g, key: '마법 저항력' },
+        { regex: /주문력\s*\+?(\d+)/g, key: '주문력' },
+        { regex: /체력\s*\+?(\d+)/g, key: '체력' },
+        { regex: /마나\s*\+?(\d+)/g, key: '마나' },
+        { regex: /공격 속도\s*\+?(\d+)%/g, key: '공격 속도 (%)' },
+        { regex: /치명타 확률\s*\+?(\d+)%/g, key: '치명타 확률 (%)' },
+        { regex: /스킬 가속\s*\+?(\d+)/g, key: '스킬 가속' },
+        { regex: /생명력 흡수\s*\+?(\d+)%/g, key: '생명력 흡수 (%)' },
+        { regex: /이동 속도\s*\+?(\d+)%/g, key: '이동 속도 (%)' },
+        { regex: /체력 재생\s*\+?(\d+)/g, key: '체력 재생' },
+        { regex: /마나 재생\s*\+?(\d+)/g, key: '마나 재생' },
+        // 필요한 다른 스탯 패턴을 여기에 추가하세요.
+    ];
 
-    try {
-        const data = await fetchData(apiUrl);
-        const items = data.data;
-        currentItemList = []; // 기존 리스트 초기화
+    // Iterate over statPatterns and extract stats
+    statPatterns.forEach(pattern => {
+        let match;
+        while ((match = pattern.regex.exec(cleanedDescription)) !== null) {
+            const value = parseFloat(match[1]);
+            stats[pattern.key] = value;
 
-        for (const itemId in items) {
-            const item = items[itemId];
-            item.id = itemId; // 아이템의 id를 설정합니다.
-            if (isItemInCategory(item, category)) {
-                currentItemList.push(item);
-            }
+            // Remove this matched string from cleanedDescription
+            cleanedDescription = cleanedDescription.replace(match[0], '');
         }
+    });
 
-        // 렌더링 함수 정의
-        function renderItemList() {
-            const searchQuery = searchInput.val().toLowerCase();
-            const sortBy = $('#sort-by-select').val();
-            const sortOrder = $('#sort-order-select').val();
+    // 가격 정보도 포함
+    // Assuming price is extracted elsewhere; if not, you can extract it similarly
 
-            // 필터링된 리스트
-            let filteredList = currentItemList.filter(item => item.name.toLowerCase().includes(searchQuery));
+    // 기타 설명 텍스트 저장 (능력치가 제거된 상태)
+    stats['descriptionText'] = cleanedDescription.trim();
 
-            // 정렬
-            filteredList.sort((a, b) => {
-                let aValue, bValue;
-
-                if (sortBy === 'name') {
-                    aValue = a.name.toLowerCase();
-                    bValue = b.name.toLowerCase();
-                    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-                    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-                    return 0;
-                } else {
-                    aValue = a.stats[sortBy] || 0;
-                    bValue = b.stats[sortBy] || 0;
-                    return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
-                }
-            });
-
-            // 아이템 목록 비우기
-            container.empty();
-
-            // 정렬된 아이템 추가
-            filteredList.forEach(item => {
-                const itemButton = $('<button>', {
-                    class: 'item-button',
-                    click: function() {
-                        // 클릭 시 아이템 추가
-                        addSelectedItem(item, selectedItemsDiv);
-                    }
-                });
-
-                const itemImg = $('<img>', {
-                    src: `https://ddragon.leagueoflegends.com/cdn/${AppState.version}/img/item/${item.image.full}`,
-                    alt: item.name
-                });
-                itemButton.append(itemImg);
-
-                const itemName = $('<span>', { text: item.name });
-                itemButton.append(itemName);
-
-                // + 버튼
-                const addButton = $('<button>', {
-                    text: '+',
-                    class: 'add-button',
-                    click: function(event) {
-                        event.stopPropagation(); // 이벤트 버블링 방지
-                        addSelectedItem(item, selectedItemsDiv);
-                    }
-                });
-                itemButton.append(addButton);
-
-                container.append(itemButton);
-            });
-        }
-
-        // 초기 렌더링
-        renderItemList();
-
-        // 정렬 이벤트 핸들러 설정
-        $('#sort-by-select, #sort-order-select').on('change', function() {
-            renderItemList();
-        });
-
-        // 검색 이벤트 핸들러 설정
-        searchInput.on('input', function() {
-            renderItemList();
-        });
-
-    } catch (error) {
-        console.error('아이템 데이터를 불러오는 중 오류 발생:', error);
-        container.append('<p>아이템 데이터를 불러오는 데 실패했습니다.</p>');
-    }
+    return stats;
 }
 
-// 이미지 선택 모달 표시 함수
 function displayImageSelectionModal(title, data) {
     const modalContent = createModal('image-selection-modal-modified', title);
     const imageListDiv = $('<div>', { id: 'image-list-modified' });
@@ -404,14 +371,12 @@ function displayImageSelectionModal(title, data) {
     if (data.slots) {
         loadRunes(data, imageListDiv);
     } else {
-        // 필요 시 아이템 이미지 로드 함수 구현
         imageListDiv.append('<p>이미지를 불러오는 기능이 구현되지 않았습니다.</p>');
     }
 
     modalContent.append(imageListDiv);
 }
 
-// 룬 이미지 로드 함수
 function loadRunes(tree, container) {
     tree.slots.forEach(slot => {
         slot.runes.forEach(rune => {
@@ -437,7 +402,6 @@ function loadRunes(tree, container) {
     });
 }
 
-// 룬을 메모 에디터에 삽입하는 함수
 function insertRuneEmbedToMemoEditor(name, image) {
     const embedCode = `<img src="https://ddragon.leagueoflegends.com/cdn/img/${image}" alt="${name}" width="64" height="64" style="object-fit: cover; border-radius: 4px; overflow: hidden;">`;
     if ($('#editor').length && $('#editor').summernote) {
@@ -447,7 +411,6 @@ function insertRuneEmbedToMemoEditor(name, image) {
     }
 }
 
-// 아이템을 메모 에디터에 삽입하는 함수
 function insertItemEmbedToMemoEditor(item) {
     const embedCode = `<img src="https://ddragon.leagueoflegends.com/cdn/${AppState.version}/img/item/${item.image.full}" alt="${item.name}" width="64" height="64" style="object-fit: cover; border-radius: 4px; overflow: hidden;">`;
     if ($('#editor').length && $('#editor').summernote) {
@@ -457,7 +420,6 @@ function insertItemEmbedToMemoEditor(item) {
     }
 }
 
-// **Added: Export Selected Items to Editor Function**
 function exportSelectedItemsToEditor() {
     if (AppState.selectedItemsData.length === 0) {
         alert('선택된 아이템이 없습니다.');
@@ -466,11 +428,9 @@ function exportSelectedItemsToEditor() {
     AppState.selectedItemsData.forEach(item => {
         insertItemEmbedToMemoEditor(item);
     });
-    // Optionally, close the modal after exporting
     $('#item-selection-modal-modified').remove();
 }
 
-// 아이템이 해당 카테고리에 속하는지 확인하는 함수
 function isItemInCategory(item, category) {
     const tags = item.tags || [];
     switch (category) {
@@ -487,35 +447,27 @@ function isItemInCategory(item, category) {
     }
 }
 
-// 데이터 드래곤 버전 설정 함수
-async function fetchDataDragonVersion() {
-    const apiUrl = 'https://ddragon.leagueoflegends.com/api/versions.json';
+const statDisplayNames = {
+    "공격력": "공격력",
+    "물리 관통력": "물리 관통력",
+    "방어구 관통력": "방어구 관통력",
+    "마법 관통력": "마법 관통력",
+    "방어력": "방어력",
+    "마법 저항력": "마법 저항력",
+    "주문력": "주문력",
+    "체력": "체력",
+    "마나": "마나",
+    "공격 속도 (%)": "공격 속도 (%)",
+    "치명타 확률 (%)": "치명타 확률 (%)",
+    "스킬 가속": "스킬 가속",
+    "생명력 흡수 (%)": "생명력 흡수 (%)",
+    "이동 속도 (%)": "이동 속도 (%)",
+    "체력 재생": "체력 재생",
+    "마나 재생": "마나 재생",
+    "price": "가격",
+    // 추가적으로 필요한 Display Names을 여기에 추가하세요.
+};
 
-    try {
-        const versions = await fetchData(apiUrl);
-        if (versions && versions.length > 0) {
-            return versions[0];
-        } else {
-            throw new Error('버전 정보가 비어 있습니다.');
-        }
-    } catch (error) {
-        console.error('버전 정보를 불러오는 중 오류 발생:', error);
-        throw error;
-    }
-}
-
-// 범용 AJAX GET 함수
-async function fetchData(url) {
-    try {
-        const response = await $.ajax({ url, method: 'GET' });
-        return response;
-    } catch (error) {
-        console.error(`데이터를 불러오는 중 오류 발생:`, error);
-        throw error;
-    }
-}
-
-// 선택된 아이템 추가 함수
 function addSelectedItem(item, selectedItemsDiv) {
     if (AppState.selectedItemsData.find(selectedItem => selectedItem.id === item.id)) {
         alert('이미 선택된 아이템입니다.');
@@ -527,18 +479,17 @@ function addSelectedItem(item, selectedItemsDiv) {
     updateComparisonTable();
 }
 
-// 선택된 아이템 렌더링 함수
 function renderSelectedItems(container) {
     container.empty();
     container.append('<h3>선택된 아이템</h3>');
     AppState.selectedItemsData.forEach(item => {
         const selectedItem = $('<div>', {
-            class: 'selected-item'
+            class: 'selected-item',
+            'data-id': item.id
         });
 
         const itemName = $('<span>', { text: item.name });
 
-        // 제거 버튼
         const removeButton = $('<button>', {
             text: '−',
             class: 'remove-button',
@@ -554,91 +505,137 @@ function renderSelectedItems(container) {
     });
 }
 
-// 선택된 아이템의 능력치 비교표 및 그래프 업데이트 함수
+function updateAvailableStats() {
+    AppState.availableStats.clear();
+    AppState.selectedItemsData.forEach(item => {
+        if (item.parsedDescription) {
+            Object.keys(item.parsedDescription).forEach(stat => {
+                if (stat !== 'descriptionText') {
+                    AppState.availableStats.add(stat);
+                }
+            });
+        }
+    });
+    AppState.availableStats.add('price');
+}
+
 let comparisonChart;
 
 function updateComparisonTable() {
     const comparisonTable = $('#comparison-table');
-    comparisonTable.empty(); // 기존 표 내용 비우기
+    comparisonTable.empty();
 
     if (AppState.selectedItemsData.length === 0) {
         comparisonTable.append('<tr><td>선택된 아이템이 없습니다.</td></tr>');
-        if (comparisonChart) {
-            comparisonChart.destroy();
-        }
         return;
     }
 
-    // 비교할 능력치 항목 정의
-    const stats = ['FlatPhysicalDamageMod', 'FlatMagicDamageMod', 'FlatArmorMod', 'FlatSpellBlockMod', 'FlatHPPoolMod', 'PercentCooldownMod'];
-
-    // 능력치 표시 이름 매핑
-    const statDisplayNames = {
-        'FlatPhysicalDamageMod': '공격력',
-        'FlatMagicDamageMod': '마법력',
-        'FlatArmorMod': '방어력',
-        'FlatSpellBlockMod': '마법 저항력',
-        'FlatHPPoolMod': '체력',
-        'PercentCooldownMod': '재사용 감소 (%)',
-    };
-
-    // 표 헤더 생성
-    const headerRow = $('<tr>');
-    headerRow.append('<th>능력치</th>');
+    // 모든 사용 가능한 스탯 수집
+    const allStats = new Set();
     AppState.selectedItemsData.forEach(item => {
-        const th = $('<th>', { text: item.name });
-        
-        // **Added: Double-Click Event to Remove Item**
-        th.css('cursor', 'pointer'); // Indicate that the header is interactive
-        th.attr('title', '더블 클릭하여 제거'); // Tooltip for user guidance
-        th.on('dblclick', () => {
-            removeItem(item.id);
-        });
-        
-        headerRow.append(th);
+        if (item.parsedDescription) {
+            Object.keys(item.parsedDescription).forEach(stat => {
+                if (stat !== 'descriptionText') {
+                    allStats.add(stat);
+                }
+            });
+        }
     });
+    allStats.add('price'); // 가격 추가
+
+    // 스탯 Display Names을 기반으로 스탯 정렬
+    const sortedStats = Array.from(allStats).sort((a, b) => {
+        return a.localeCompare(b);
+    });
+
+    // 테이블 헤더 생성
+    const headerRow = $('<tr>');
+    headerRow.append('<th>아이템 이름</th>');
+    sortedStats.forEach(statKey => {
+        const displayName = statDisplayNames[statKey] || statKey;
+        headerRow.append(`<th>${displayName}</th>`);
+    });
+    // 기타 설명 열 제거
     comparisonTable.append(headerRow);
 
-    // 각 능력치에 대한 행 생성
-    stats.forEach(stat => {
-        const row = $('<tr>');
-        row.append(`<td>${statDisplayNames[stat] || stat}</td>`);
-        AppState.selectedItemsData.forEach(item => {
-            // 능력치가 없는 경우 0으로 표시
-            const statValue = item.stats[stat] || 0;
-            row.append(`<td>${statValue}</td>`);
-        });
-        comparisonTable.append(row);
+    // 테이블 스타일 적용
+    comparisonTable.css({
+        'width': '100%',
+        'border-collapse': 'collapse'
     });
 
-    // 그래프 업데이트
-    updateComparisonChart(stats, statDisplayNames);
+    // 각 아이템에 대한 행 추가
+    AppState.selectedItemsData.forEach(item => {
+        const itemRow = $('<tr>');
+
+        // 아이템 이름 셀에 툴팁 추가
+        const itemNameCell = $('<td>', {
+            text: item.name,
+            title: item.parsedDescription && item.parsedDescription.descriptionText ? item.parsedDescription.descriptionText : ''
+        });
+        itemRow.append(itemNameCell);
+
+        sortedStats.forEach(statKey => {
+            let statValue = '';
+
+            if (statKey === 'price') {
+                statValue = item.gold ? item.gold.total || 0 : '';
+            } else if (item.parsedDescription && item.parsedDescription[statKey] !== undefined) {
+                statValue = item.parsedDescription[statKey];
+                // 가격 대비 성능비 계산
+                const price = item.gold ? item.gold.total || 0 : 1; // 가격이 0일 경우를 대비하여 1로 설정
+                const ratio = price > 0 ? (statValue / price).toFixed(4) : '0';
+                statValue = `${statValue} (${ratio})`; // 예: 30 (0.02)
+            }
+
+            itemRow.append(`<td>${statValue}</td>`);
+        });
+
+        // 기타 설명 셀 제거
+        comparisonTable.append(itemRow);
+    });
+
+    // 테이블 셀 스타일 적용
+    comparisonTable.find('th, td').css({
+        'border': '1px solid #ddd',
+        'padding': '8px',
+        'text-align': 'center',
+        'vertical-align': 'top'
+    });
+
+    comparisonTable.find('th').css({
+        'background-color': '#f2f2f2',
+        'font-weight': 'bold'
+    });
+
+    // 차트 업데이트
+    updateComparisonChart(sortedStats);
 }
 
-// **Added: Remove Item Function**
-function removeItem(itemId) {
-    AppState.selectedItemsData = AppState.selectedItemsData.filter(item => item.id !== itemId);
-    renderSelectedItems($('#selected-items'));
-    updateComparisonTable();
-}
-
-// 그래프 업데이트 함수
-function updateComparisonChart(stats, statDisplayNames) {
+function updateComparisonChart(stats) {
     const labels = stats.map(stat => statDisplayNames[stat] || stat);
     const datasets = AppState.selectedItemsData.map((item, index) => {
+        const data = stats.map(stat => {
+            if (stat === 'price') {
+                return item.gold ? item.gold.total || 0 : 0;
+            } else if (item.parsedDescription && item.parsedDescription[stat] !== undefined) {
+                return item.parsedDescription[stat];
+            } else {
+                return 0;
+            }
+        });
+
         return {
             label: item.name,
-            data: stats.map(stat => item.stats[stat] || 0),
+            data: data,
             backgroundColor: getColor(index),
         };
     });
 
-    // 기존 차트가 있으면 파괴합니다.
     if (comparisonChart) {
         comparisonChart.destroy();
     }
 
-    // 새로운 차트를 생성합니다.
     const ctx = document.getElementById('comparison-chart').getContext('2d');
     comparisonChart = new Chart(ctx, {
         type: 'bar',
@@ -655,7 +652,16 @@ function updateComparisonChart(stats, statDisplayNames) {
                 title: {
                     display: true,
                     text: '아이템 능력치 비교 그래프'
-                }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                },
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
             },
             scales: {
                 x: {
@@ -669,68 +675,73 @@ function updateComparisonChart(stats, statDisplayNames) {
     });
 }
 
-// 색상 팔레트
+function getItemTooltipContent(item) {
+    let tooltipContent = `<strong>${item.name}</strong><br><br>`;
+
+    if (item.parsedDescription) {
+        Object.keys(item.parsedDescription).forEach(stat => {
+            if (stat !== 'descriptionText') {
+                const statName = statDisplayNames[stat] || stat;
+                const statValue = item.parsedDescription[stat];
+                tooltipContent += `${statName}: ${statValue}<br>`;
+            }
+        });
+    }
+
+    if (item.description) {
+        tooltipContent += `<br><strong>설명:</strong><br>${item.description}`;
+    }
+
+    return tooltipContent;
+}
+
+function removeItem(itemId) {
+    AppState.selectedItemsData = AppState.selectedItemsData.filter(item => item.id !== itemId);
+    renderSelectedItems($('#selected-items'));
+    updateAvailableStats();
+    updateComparisonTable();
+}
+
 function getColor(index) {
     const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
     return colors[index % colors.length];
 }
 
-// 공통 모달 생성 함수
-function createModal(id, title, onClose) { // onClose 추가
-    const modal = $('<div>', { class: 'modal-modified', id: id });
-    const modalContent = $('<div>', { class: 'modal-content-modified' });
-
-    const closeButton = $('<button>', {
-        text: '닫기',
-        class: 'close-button',
-        click: () => {
-            modal.remove();
-            if (typeof onClose === 'function') {
-                onClose(); // onClose 콜백 실행
-            }
-        }
-    });
-
-    // **Added: Export Images Button**
-    let exportButton;
-    if (id === 'item-selection-modal-modified') { // Only add to item selection modal
-        exportButton = $('<button>', {
-            text: '이미지 내보내기',
-            class: 'export-button',
-            click: () => {
-                exportSelectedItemsToEditor();
-            }
-        });
-    }
-
-    const modalTitle = $('<h2>', { text: title });
-    
-    // Append buttons
-    if (exportButton) {
-        modalContent.append(closeButton, exportButton, modalTitle);
-    } else {
-        modalContent.append(closeButton, modalTitle);
-    }
-
-    modal.append(modalContent);
-    $('body').append(modal);
-    modal.show();
-
-    return modalContent;
-}
-
-// 아이템 선택 초기화 함수
 function resetItemSelection() {
-    // 선택된 아이템 데이터 초기화
     AppState.selectedItemsData = [];
 
-    // 선택된 아이템 UI 초기화
     const selectedItemsDiv = $('#selected-items');
     if (selectedItemsDiv.length) {
         selectedItemsDiv.empty();
         selectedItemsDiv.append('<h3>선택된 아이템</h3>');
     }
 
-    // 비교 표 및 그래프 초기화
+    updateAvailableStats();
     updateComparisonTable();
+}
+
+async function fetchDataDragonVersion() {
+    const apiUrl = 'https://ddragon.leagueoflegends.com/api/versions.json';
+
+    try {
+        const versions = await fetchData(apiUrl);
+        if (versions && versions.length > 0) {
+            return versions[0];
+        } else {
+            throw new Error('버전 정보가 비어 있습니다.');
+        }
+    } catch (error) {
+        console.error('버전 정보를 불러오는 중 오류 발생:', error);
+        throw error;
+    }
+}
+
+async function fetchData(url) {
+    try {
+        const response = await $.ajax({ url, method: 'GET' });
+        return response;
+    } catch (error) {
+        console.error(`데이터를 불러오는 중 오류 발생:`, error);
+        throw error;
+    }
 }
