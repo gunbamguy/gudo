@@ -205,13 +205,12 @@
 
 /* 선택된 아이템 스타일 */
 #selected-items {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 그리드 칸의 최소 크기를 100px로 설정하고 자동으로 칸을 채움 */
+    gap: 10px; /* 아이템 간의 간격 */
     max-height: 60vh;
     overflow-y: auto;
 }
-
 #selected-items h3 {
     margin-bottom: 10px;
     text-align: center;
@@ -227,23 +226,50 @@
     border-radius: 4px;
 }
 
-#selected-items .selected-item span {
-    flex: 1;
+/* 선택된 아이템 스타일 (그리드 레이아웃) */
+#selected-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); /* 그리드 칸의 최소 크기를 100px로 설정하고 자동으로 칸을 채움 */
+    gap: 30px; /* 아이템 간의 간격 */
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
-#selected-items .selected-item button.remove-button {
+#selected-items .selected-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* 이미지와 텍스트를 중앙에 배치 */
+.selected-item img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    margin-bottom: 5px;
+}
+
+.selected-item span {
+    text-align: center;
+    margin-top: 5px;
+}
+
+.selected-item .remove-button {
+    position: absolute;
+    top: -5px;
+    right: -5px;
     background-color: #dc3545;
     color: white;
     border: none;
-    padding: 3px 6px;
-    cursor: pointer;
     border-radius: 50%;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
-}
-
-#selected-items .selected-item button.remove-button:hover {
-    background-color: #c82333;
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+    cursor: pointer;
 }
 
 /* 비교 표 스타일 */
@@ -313,11 +339,21 @@
 }
 
 /* 선택된 아이템 아이콘 스타일 */
+
 .selected-item {
-    display: inline-block;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px !important; /* 내부 패딩 줄이기 */
+    font-size: 12px !important; /* 글자 크기 줄이기 */
+    width: 80px !important; /* 전체 너비 줄이기 */
+    height: auto !important; /* 높이 자동 조정 */
+    border: 1px solid #ccc;
+    border-radius: 4px;
     position: relative;
-    margin: 5px;
 }
+
 
 .selected-item-icon {
     width: 40px;
@@ -328,26 +364,36 @@
 }
 
 /* 제거 버튼 스타일 */
+/* 선택된 아이템 제거 버튼 스타일 */
 .selected-item .remove-button {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background-color: #dc3545;
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute !important;
+    top: 5px !important;
+    right: 5px !important;
+    background-color: #dc3545 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 14px !important; /* 버튼 크기 강제 적용 */
+    height: 14px !important; /* 버튼 크기 강제 적용 */
+    font-size: 10px !important; /* 글자 크기 강제 적용 */
+    padding: 2px !important; /* 내부 간격 강제 적용 */
+    cursor: pointer !important;
 }
 
 .selected-item .remove-button:hover {
-    background-color: #c82333;
+    background-color: #c82333 !important;
 }
+
+/* 선택된 아이템의 버튼 크기 조정 */
+.selected-item button {
+    padding: 4px 8px !important; /* 내부 패딩 줄이기 */
+    font-size: 12px !important; /* 글자 크기 줄이기 */
+    width: 50px !important; /* 버튼의 자동 너비 */
+    height: auto !important; /* 버튼의 자동 높이 */
+    border-radius: 4px !important; /* 버튼 모서리 둥글게 */
+}
+
+
 
 /* 이미지 추가 버튼 스타일 */
 .item-button .insert-image-button {
