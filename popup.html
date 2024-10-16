@@ -10,6 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.css" rel="stylesheet">
     <!-- External CSS File -->
     <link href="style.css" rel="stylesheet">
+	<link href="imageinsert.css" rel="stylesheet">
     <style>
         /* 팝업 창의 추가 스타일 */
         body  {
@@ -157,8 +158,10 @@ body::-webkit-scrollbar-thumb:hover {
             <div id="comparison-buttons" class="comparison-container">
                 <!-- 비교 버튼이 여기에 동적으로 추가됨 -->
             </div>
-        </div>
 
+        </div>
+			<button id="open-item-modal">아이템 선택</button>
+<button id="open-rune-modal">룬 선택</button>
     </div>
 
 
@@ -194,6 +197,13 @@ $(document).ready(function() {
         const championId = $(this).data('champion-id');
         loadChampionInfo(championId);
     });
+	        $('#open-item-modal').on('click', function() {
+            displayCategorySelectionModal('아이템 선택', 'item'); // 아이템 모달 호출
+        });
+
+        $('#open-rune-modal').on('click', function() {
+            displayCategorySelectionModal('룬 선택', 'rune'); // 룬 모달 호출
+        });
 });
 </script>
 <script>function loadChampionInfo(championId) {
