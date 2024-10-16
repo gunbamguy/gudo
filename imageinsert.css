@@ -15,12 +15,25 @@
     max-width: 1200px;
 }
 
+.modal-modified button {
+    padding: 8px 16px;
+    margin: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+}
+
+.modal-modified button:hover {
+    background-color: #f0f0f0;
+}
+
 /* 공통 모달 내용 스타일 */
 .modal-content-modified {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    width: 100%;
+    align-items: center;
     position: relative;
 }
 
@@ -58,20 +71,47 @@
     background-color: #218838;
 }
 
-/* 카테고리 선택 모달 스타일 */
+/* 기타 공통 버튼 스타일 */
+.export-button {
+    width: 200px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.export-button:hover {
+    background-color: #0056b3;
+}
+
+/* 특정 모달 스타일 */
+#category-selection-modal-modified,
+#item-selection-modal-modified,
+#image-selection-modal-modified {
+    /* 필요한 스타일을 여기에 추가 */
+}
+
 #category-selection-modal-modified {
     width: 400px;
     max-width: 90vw;
     max-height: 80vh;
 }
 
-/* 아이템 선택 모달 스타일 */
 #item-selection-modal-modified {
     width: 100%;
     max-width: 1200px;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+}
+
+#image-selection-modal-modified .modal-body {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
 }
 
 /* 상단 컨테이너 스타일 */
@@ -104,13 +144,11 @@
     gap: 5px;
 }
 
-/* 드롭다운 레이블 스타일 */
 .sort-container label {
     font-size: 14px;
     color: #333;
 }
 
-/* 드롭다운 메뉴 스타일 */
 .sort-select {
     padding: 8px;
     border-radius: 5px;
@@ -206,11 +244,12 @@
 /* 선택된 아이템 스타일 */
 #selected-items {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 그리드 칸의 최소 크기를 100px로 설정하고 자동으로 칸을 채움 */
-    gap: 10px; /* 아이템 간의 간격 */
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); /* 그리드 칸의 최소 크기를 50px로 설정하고 자동으로 칸을 채움 */
+    gap: 30px; /* 아이템 간의 간격 */
     max-height: 60vh;
     overflow-y: auto;
 }
+
 #selected-items h3 {
     margin-bottom: 10px;
     text-align: center;
@@ -218,58 +257,52 @@
 
 #selected-items .selected-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-/* 선택된 아이템 스타일 (그리드 레이아웃) */
-#selected-items {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); /* 그리드 칸의 최소 크기를 100px로 설정하고 자동으로 칸을 채움 */
-    gap: 30px; /* 아이템 간의 간격 */
-    max-height: 60vh;
-    overflow-y: auto;
-}
-
-#selected-items .selected-item {
-    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 5px;
+    padding: 4px; /* 내부 패딩 줄이기 */
+    font-size: 12px; /* 글자 크기 줄이기 */
+    width: 80px; /* 전체 너비 줄이기 */
+    height: auto; /* 높이 자동 조정 */
     border: 1px solid #ccc;
     border-radius: 4px;
+    position: relative;
+    background-color: #1c1c1c; /* 어두운 배경색 */
+    color: #f0f0f0; /* 밝은 텍스트 */
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5); /* 그림자 효과로 깊이감 부여 */
 }
 
-/* 이미지와 텍스트를 중앙에 배치 */
-.selected-item img {
+#selected-items .selected-item img {
     width: 52px;
     height: 52px;
     object-fit: contain;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     margin-bottom: 5px;
 }
 
-.selected-item span {
+#selected-items .selected-item span {
     text-align: center;
     margin-top: 5px;
 }
 
-.selected-item .remove-button {
+#selected-items .selected-item .remove-button {
     position: absolute;
-    top: -5px;
-    right: -5px;
+    top: 5px;
+    right: 5px;
     background-color: #dc3545;
     color: white;
     border: none;
     border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-size: 12px;
+    width: 14px;
+    height: 14px;
+    font-size: 10px;
+    padding: 2px;
     cursor: pointer;
+}
+
+#selected-items .selected-item .remove-button:hover {
+    background-color: #c82333;
 }
 
 /* 비교 표 스타일 */
@@ -311,25 +344,6 @@
     max-width: 100%;
 }
 
-/* 공통 버튼 스타일 */
-.modal-modified button {
-    padding: 8px 16px;
-    margin: 5px;
-    font-size: 1rem;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.2s ease;
-}
-
-.modal-modified button:hover {
-    background-color: #f0f0f0;
-}
-
-/* 저장 버튼 호버 스타일 */
-.modal-modified button.save-button:hover {
-    background-color: #218838;
-}
-
 /* 에디터 내 삽입된 아이템 이미지 스타일 조정 */
 #editor img {
     max-width: 100%;
@@ -338,100 +352,12 @@
     border-radius: 4px;
 }
 
-/* 선택된 아이템 아이콘 스타일 */
-
-.selected-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4px !important; /* 내부 패딩 줄이기 */
-    font-size: 12px !important; /* 글자 크기 줄이기 */
-    width: 80px !important; /* 전체 너비 줄이기 */
-    height: auto !important; /* 높이 자동 조정 */
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    position: relative;
-}
-
-
-.selected-item-icon {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-/* 제거 버튼 스타일 */
-/* 선택된 아이템 제거 버튼 스타일 */
-.selected-item .remove-button {
-    position: absolute !important;
-    top: 5px !important;
-    right: 5px !important;
-    background-color: #dc3545 !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 50% !important;
-    width: 14px !important; /* 버튼 크기 강제 적용 */
-    height: 14px !important; /* 버튼 크기 강제 적용 */
-    font-size: 10px !important; /* 글자 크기 강제 적용 */
-    padding: 2px !important; /* 내부 간격 강제 적용 */
-    cursor: pointer !important;
-}
-
-.selected-item .remove-button:hover {
-    background-color: #c82333 !important;
-}
-
-/* 선택된 아이템의 버튼 크기 조정 */
-.selected-item button {
-    padding: 4px 8px !important; /* 내부 패딩 줄이기 */
-    font-size: 12px !important; /* 글자 크기 줄이기 */
-    width: 50px !important; /* 버튼의 자동 너비 */
-    height: auto !important; /* 버튼의 자동 높이 */
-    border-radius: 4px !important; /* 버튼 모서리 둥글게 */
-}
-
-
-
-/* 이미지 추가 버튼 스타일 */
-.item-button .insert-image-button {
-    margin-top: 5px;
-    padding: 2px 6px;
-    font-size: 12px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.item-button .insert-image-button:hover {
-    background-color: #5a6268;
-    color: #fff;
-}
-
-.export-button {
-	width: 200px; /* 너비 300px 설정 */
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 10px; /* Adjust spacing as needed */
-}
-
-.export-button:hover {
-    background-color: #0056b3;
-}
-
 /* 룬 버튼 스타일 */
 .rune-button {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 100px; /* 원하는 너비로 설정 */
-    height: 100px; /* 원하는 높이로 설정 */
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -445,13 +371,164 @@
     transform: scale(1.05);
 }
 
-/* 룬 이미지 스타일 */
 .rune-button img {
-    width: 50px; /* 원하는 크기로 설정 */
-    height: 50px; /* 원하는 크기로 설정 */
+    width: 50px;
+    height: 50px;
     object-fit: contain;
     margin-bottom: 5px;
 }
+
+/* 룬 버튼 컨테이너에 그리드 설정 */
+#rune-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);  /* 기본 3열 */
+    gap: 10px;  /* 열 간격 */
+}
+
+#rune-container.precision-first {
+    grid-template-columns: repeat(4, 1fr);  /* 정밀 룬의 첫 번째 줄만 4열 */
+}
+
+/* 룬 행 스타일 */
+.rune-row.precision-first {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);  /* 4열 구성 */
+    gap: 10px;  /* 열 간격 */
+}
+
+.rune-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);  /* 3열 구성 */
+    gap: 10px;  /* 열 간격 */
+}
+
+/* 룬 선택 래퍼 스타일 */
+.rune-selection-wrapper {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start; /* 상단 정렬 */
+}
+
+.rune-selection-container {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.rune-description-container {
+    flex: 1;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 400px;
+    background-color: #1c1c1c; /* 어두운 배경색 */
+    color: #f0f0f0; /* 밝은 텍스트 */
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5); /* 그림자 효과로 깊이감 부여 */
+}
+
+#rune-description-container img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #666; /* 이미지 테두리 추가 */
+    margin-bottom: 15px;
+}
+
+#rune-description-container h3 {
+    font-size: 24px;
+    color: #e6b400; /* 금색 느낌의 고급스러운 색상 */
+    margin-bottom: 15px;
+}
+
+#rune-description-container p {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #d4d4d4;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* 강조 스타일 */
+
+/* 숫자 강조 */
+.highlight-number {
+    color: #e6b400; /* 어두운 노란색 */
+    font-weight: bold;
+}
+
+/* 기울임 텍스트 */
+.italic-text {
+    font-style: italic;
+}
+
+/* 굵은 텍스트 */
+.bold-text {
+    font-weight: bold;
+}
+
+/* 고정 피해 강조 */
+.highlight-damage {
+    color: #ff4d4f; /* 붉은색 */
+    font-weight: bold;
+}
+
+/* 골드 강조 */
+.highlight-gold {
+    color: #ffc53d; /* 골드 색상 */
+    font-weight: bold;
+}
+
+/* 레벨당 스케일 강조 */
+.highlight-scale {
+    color: #1890ff; /* 파란색 */
+    font-weight: bold;
+}
+
+/* 주목 강조 */
+.highlight-attention {
+    color: #e6b400; /* 어두운 노란색 */
+    font-weight: bold;
+}
+
+/* 생명력 흡수 강조 */
+.highlight-scaleAD {
+    color: #52c41a; /* 초록색 */
+    font-weight: bold;
+}
+
+/* 최대 체력 강조 */
+.highlight-scaleHealth {
+    color: #faad14; /* 주황색 */
+    font-weight: bold;
+}
+
+/* 수식 강조 (괄호 안의 내용) */
+.highlight-formula {
+    color: #1890ff; /* 파란색 */
+    font-weight: bold;
+    font-style: italic;
+}
+
+/* 글꼴 지정된 텍스트 */
+.font-text {
+    font-family: inherit; /* 기본 글꼴 유지 */
+}
+
+/* 선택된 아이템 아이콘 스타일 */
+.selected-item-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* 룬 선택 모달의 아이템 리스트 스타일 */
 #image-list-modified {
     display: grid;
     grid-template-columns: repeat(3, 1fr); /* 3열 */
@@ -460,4 +537,97 @@
     max-width: 360px; /* 전체 그리드의 최대 너비 제한 */
     margin: 0 auto; /* 그리드를 가운데 정렬 */
     box-sizing: border-box;
+}
+
+/* 아이템 버튼 스타일 */
+.item-button {
+    position: relative;
+    margin: 5px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #fff;
+    width: 120px;
+    text-align: center;
+}
+
+.item-button img {
+    width: 64px;
+    height: 64px;
+}
+
+.item-button .insert-image-button {
+    margin-top: 5px;
+    padding: 2px 6px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.item-button .insert-image-button:hover {
+    background-color: #5a6268;
+    color: #fff;
+}
+
+.item-button .add-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 2px 6px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.item-button .add-button:hover {
+    background-color: #45a049;
+}
+
+/* 선택된 아이템 스타일 */
+.selected-item {
+    position: relative;
+    display: inline-block;
+}
+
+/* 제거 버튼 스타일 */
+.remove-button {
+    background-color: #ff4d4d;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin-top: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.remove-button:hover {
+    background-color: #ff1a1a;
+}
+
+/* 스탯 토글 컨테이너 스타일 */
+.stats-toggle-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.stats-toggle-container input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.stats-toggle-container label {
+    margin-right: 15px;
+    font-size: 14px;
 }
