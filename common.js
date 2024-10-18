@@ -2,18 +2,30 @@
 
 // 공통으로 사용되는 함수들
 
-function fetchChampionData() {
-    // 챔피언 데이터를 가져오는 로직
-    const version = '13.6.1'; // 예시 버전
-    fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion.json`)
+function fetchLatestVersion() {
+    return fetch('https://ddragon.leagueoflegends.com/api/versions.json')
         .then(response => response.json())
-        .then(data => {
-            window.championList = data.data;
-            // 추가 로직 (예: 챔피언 리스트 렌더링)
+        .then(versions => {
+            return versions[0]; // 가장 최신 버전은 첫 번째 항목
         })
         .catch(error => {
-            console.error('챔피언 데이터 로드 실패:', error);
+            console.error('버전 정보 로드 실패:', error);
         });
+}
+
+function fetchChampionData() {
+    // 최신 버전을 자동으로 가져와서 챔피언 데이터를 불러오는 로직
+    fetchLatestVersion().then(version => {
+        fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/ko_KR/champion.json`)
+            .then(response => response.json())
+            .then(data => {
+                window.championList = data.data;
+                // 추가 로직 (예: 챔피언 리스트 렌더링)
+            })
+            .catch(error => {
+                console.error('챔피언 데이터 로드 실패:', error);
+            });
+    });
 }
 
 function addSlots() {
