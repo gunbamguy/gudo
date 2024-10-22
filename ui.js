@@ -164,11 +164,11 @@ function displayRoleSelection() {
     // 드롭다운 메뉴 추가
     const memoChampionDropdownLabel = $('<label>', { text: '', for: 'memo-champion-dropdown-modal' });
     const memoChampionDropdown = $('<select>', { id: 'memo-champion-dropdown-modal', class: 'form-control', style: 'width: 45%;' });
-    memoChampionDropdown.append($('<option>', { value: '', text: '선택하세요' }));
+    memoChampionDropdown.append($('<option>', { value: '', text: '챔피언 메모 선택' }));
 
     const formationDropdownLabel = $('<label>', { text: '', for: 'formation-dropdown-modal' });
     const formationDropdown = $('<select>', { id: 'formation-dropdown-modal', class: 'form-control', style: 'width: 45%;' });
-    formationDropdown.append($('<option>', { value: '', text: '선택하세요' }));
+    formationDropdown.append($('<option>', { value: '', text: '구도 메모 선택' }));
 
     // 드롭다운 메뉴를 컨테이너에 추가 (왼쪽 정렬)
     dropdownContainer.append(memoChampionDropdownLabel, memoChampionDropdown, formationDropdownLabel, formationDropdown);
@@ -176,11 +176,41 @@ function displayRoleSelection() {
     // 드롭다운 컨테이너를 모달에 추가
     modalContent.append(dropdownContainer);
 
-    // 저장된 챔피언 메모와 구도 메모 불러오기 (메인 및 모달 드롭다운 업데이트)
-    populateMemoChampionDropdown($('#memo-champion-dropdown-main'));
-    populateFormationDropdown($('#formation-dropdown-main'));
-    populateMemoChampionDropdown($('#memo-champion-dropdown-modal'));
-    populateFormationDropdown($('#formation-dropdown-modal'));
+		// 모달 내부의 드롭다운 메뉴를 데이터로 채웁니다.
+	populateMemoChampionDropdown($('#memo-champion-dropdown-main'));
+	populateFormationDropdown($('#formation-dropdown-main'));
+	populateMemoChampionDropdown($('#memo-champion-dropdown-modal'));
+	populateFormationDropdown($('#formation-dropdown-modal'));
+
+
+    // 드롭다운 메뉴 이벤트 핸들러 추가
+    memoChampionDropdown.on('change', function() {
+        const selectedChampionId = $(this).val();
+        if (selectedChampionId) {
+            // 선택된 챔피언 메모를 불러옵니다.
+            loadMemo(selectedChampionId, function(memo) {
+                $('#editor').summernote('code', memo.memoContent || '');
+            });
+            // 슬롯에 챔피언을 설정합니다.
+            if (selectedSlot) {
+                setChampionToSlot(selectedSlot, selectedChampionId);
+            }
+            // 챔피언 정보를 표시합니다.
+            displayChampionInfo(selectedChampionId);
+            // 모달을 닫습니다.
+            modal.hide();
+        }
+    });
+
+    formationDropdown.on('change', function() {
+        const selectedFormationKey = $(this).val();
+        if (selectedFormationKey) {
+            // 선택된 구도를 불러옵니다.
+            loadFormation(selectedFormationKey);
+            // 모달을 닫습니다.
+            modal.hide();
+        }
+    });
 
     // 기존 역할 선택 및 챔피언 선택 UI 추가
     modalContent.append('<h2>역할 선택</h2>');
