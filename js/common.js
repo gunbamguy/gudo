@@ -10,6 +10,7 @@ const AppState = {
     roles: ['탑', '정글', '미드', '원딜', '서폿'],
     selectedSlot: null,
     currentChampionId: null,
+    lastActiveEditor: '#editor', // 클릭 및 활성화된 에디터 추적
     formationMemos: {},
     selectedItemsData: [],
     sortableStats: new Set(),

@@ -90,6 +90,11 @@ function initSummernoteEditors() {
             ['para', ['ul', 'ol', 'paragraph']],
             ['view', ['fullscreen', 'codeview']]
         ],
+        callbacks: {
+            onFocus: function() {
+                AppState.lastActiveEditor = '#editor';
+            }
+        },
         buttons: {
             youtubeLink: createYouTubeButton(),
             customPyeong: createPyeongButton(),
@@ -113,6 +118,11 @@ function initSummernoteEditors() {
             ['para', ['ul', 'ol', 'paragraph']],
             ['view', ['fullscreen', 'codeview']]
         ],
+        callbacks: {
+            onFocus: function() {
+                AppState.lastActiveEditor = '#formation-editor';
+            }
+        },
         buttons: {
             youtubeLink: createYouTubeButton()
         }

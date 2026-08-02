@@ -367,11 +367,40 @@ async function displayChampionInfo(championId) {
     infoDiv.append(spellsDiv);
 }
 
+// 에디터 포커스 및 클릭 트래킹
+$(document).on('focus mousedown click', '.note-editable', function() {
+    if ($(this).closest('#formation-container').length) {
+        AppState.lastActiveEditor = '#formation-editor';
+    } else {
+        AppState.lastActiveEditor = '#editor';
+    }
+});
+
 function insertSpellImageToEditor(imgName, spellName, key) {
     const imgUrl = `https://ddragon.leagueoflegends.com/cdn/${AppState.version}/img/spell/${imgName}`;
-    const html = `<img src="${imgUrl}" alt="${spellName}" title="[${key}] ${spellName}" style="width:32px; height:32px; border-radius:4px; vertical-align:middle; margin:0 3px; border:1px solid rgba(255,255,255,0.2);"/>`;
-    if ($('#editor').length && $('#editor').summernote) {
-        $('#editor').summernote('pasteHTML', html);
+    const targetSelector = AppState.lastActiveEditor || '#editor';
+    const $targetEditor = $(targetSelector);
+
+    if ($targetEditor.length && $targetEditor.summernote) {
+        $targetEditor.summernote('focus');
+        
+        // 이미지 HTML 삽입
+        const html = `<img src="${imgUrl}" alt="${spellName}" title="[${key}] ${spellName}" style="width:28px; height:28px; border-radius:4px; vertical-align:middle; margin:0 3px; border:1px solid rgba(255,255,255,0.2);"/>&nbsp;`;
+        $targetEditor.summernote('pasteHTML', html);
+        
+        // DOM Range 수준에서 커서를 에디터 맨 끝 텍스트 노드로 강제 이동 (커서 고정 현상 100% 방지)
+        setTimeout(() => {
+            $targetEditor.summernote('focus');
+            const editable = $targetEditor.next('.note-editor').find('.note-editable')[0] || $targetEditor.siblings('.note-editor').find('.note-editable')[0];
+            if (editable) {
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.selectNodeContents(editable);
+                range.collapse(false); // 맨 끝 텍스트 노드로 강제 이동
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }, 10);
     }
 }
 
@@ -462,6 +491,25 @@ async function compareSlots(myNum, enemyNum) {
         return;
     }
 
+    // 데미지 타입 판별 유틸
+    function getDamageTypeInfo(champ) {
+        if (!champ) return { label: '물리 (AD)', color: '#e84118', icon: '⚔️ AD' };
+        const attack = champ.info ? champ.info.attack : 5;
+        const magic = champ.info ? champ.info.magic : 5;
+        const tags = champ.tags || [];
+
+        if (tags.includes('Mage') || magic > attack + 2) {
+            return { label: '마법 (AP)', color: '#9c88ff', icon: '🔮 AP' };
+        } else if (magic >= 4 && attack >= 4) {
+            return { label: '하이브리드 (AD/AP)', color: '#fbc531', icon: '⚡ Hybrid' };
+        } else {
+            return { label: '물리 (AD)', color: '#e84118', icon: '⚔️ AD' };
+        }
+    }
+
+    const dt1 = getDamageTypeInfo(c1);
+    const dt2 = getDamageTypeInfo(c2);
+
     // 모달 DOM 생성 및 화면 정중앙 띄움
     $('#compare-modal').remove();
 
@@ -475,8 +523,8 @@ async function compareSlots(myNum, enemyNum) {
             left: '50%',
             transform: 'translate(-50%, -50%)',
             zIndex: 999999,
-            width: '90%',
-            maxWidth: '850px',
+            width: '92%',
+            maxWidth: '900px',
             background: 'none',
             boxShadow: 'none'
         }
@@ -486,12 +534,12 @@ async function compareSlots(myNum, enemyNum) {
         class: 'modal-content draggable-modal-content',
         css: {
             width: '100%',
-            maxHeight: '90vh',
+            maxHeight: '92vh',
             overflowY: 'auto',
             background: 'var(--bg-secondary)',
             border: '2px solid var(--blue-accent)',
             boxShadow: '0 0 50px rgba(0, 168, 255, 0.4)',
-            borderRadius: '12px',
+            borderRadius: '14px',
             padding: '20px'
         }
     });
@@ -500,46 +548,91 @@ async function compareSlots(myNum, enemyNum) {
         id: 'compare-modal-header',
         css: {
             display: 'flex',
-            justify-content: 'space-between',
-            align-items: 'center',
-            marginBottom: '15px',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
             paddingBottom: '10px',
             borderBottom: '1px solid var(--border-color)',
             cursor: 'move',
             userSelect: 'none'
         }
     });
-    header.append(`<h3 style="margin:0; color:#fff; font-size:16px; font-weight:700;">✋ Matchup 스탯 비교: <span style="color:var(--blue-accent);">${c1.name}</span> vs <span style="color:var(--accent-color);">${c2.name}</span> <small style="font-size:11px; color:#aaa; font-weight:normal;">(헤더를 잡고 창 이동 가능)</small></h3>`);
+    header.append(`<h3 style="margin:0; color:#fff; font-size:16px; font-weight:700;">✋ Matchup 1:1 대치 구도: <span style="color:var(--blue-accent);">${c1.name}</span> vs <span style="color:var(--accent-color);">${c2.name}</span></h3>`);
     
     const closeBtn = $('<button>', { text: '✕ 닫기', class: 'btn btn-danger btn-sm', click: () => modal.remove() });
     header.append(closeBtn);
     content.append(header);
 
-    // 탭 메뉴 버튼
-    const tabNav = $('<div>', { class: 'btn-group', css: { marginBottom: '15px', width: '100%', display: 'flex' } });
-    const btnTab1 = $('<button>', { class: 'btn btn-primary nav-tab-btn active', text: '📊 기본 스탯 비교', css: { flex: 1 } });
-    const btnTab2 = $('<button>', { class: 'btn btn-default nav-tab-btn', text: '⏱️ 스킬 쿨타임 비교', css: { flex: 1 } });
-    const btnTab3 = $('<button>', { class: 'btn btn-default nav-tab-btn', text: '🎯 스킬 사거리 비교', css: { flex: 1 } });
-    tabNav.append(btnTab1, btnTab2, btnTab3);
+    // 데미지 타입 및 역할군 서머리 바
+    const summaryBar = $(`
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.4); padding:10px 16px; border-radius:10px; margin-bottom:15px; border:1px solid rgba(255,255,255,0.08);">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-weight:700; color:var(--blue-accent);">${c1.name}</span>
+                <span style="font-size:11px; padding:2px 8px; border-radius:12px; background:${dt1.color}; color:#fff; font-weight:bold;">${dt1.icon} ${dt1.label}</span>
+                <span style="font-size:11px; color:#aaa;">(${(c1.tags || []).join(', ')})</span>
+            </div>
+            <span style="font-weight:800; font-size:14px; color:#fbc531;">VS</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:11px; color:#aaa;">(${(c2.tags || []).join(', ')})</span>
+                <span style="font-size:11px; padding:2px 8px; border-radius:12px; background:${dt2.color}; color:#fff; font-weight:bold;">${dt2.icon} ${dt2.label}</span>
+                <span style="font-weight:700; color:var(--accent-color);">${c2.name}</span>
+            </div>
+        </div>
+    `);
+    content.append(summaryBar);
+
+    // 탭 메뉴 버튼 (4개 탭)
+    const tabNav = $('<div>', { class: 'btn-group', css: { marginBottom: '15px', width: '100%', display: 'flex', gap: '4px' } });
+    const btnTab1 = $('<button>', { class: 'btn btn-primary nav-tab-btn active', text: '📊 기본 스탯', css: { flex: 1 } });
+    const btnTab2 = $('<button>', { class: 'btn btn-default nav-tab-btn', text: '⏱️ 스킬 쿨타임 (가로 슬라이드)', css: { flex: 1 } });
+    const btnTab3 = $('<button>', { class: 'btn btn-default nav-tab-btn', text: '🎯 스킬 사거리 (레이더 맵)', css: { flex: 1 } });
+    const btnTab4 = $('<button>', { class: 'btn btn-default nav-tab-btn', text: '💡 라이엇 카운터 팁', css: { flex: 1 } });
+    tabNav.append(btnTab1, btnTab2, btnTab3, btnTab4);
     content.append(tabNav);
 
-    // 탭 1: 기본 스탯
+    // 탭 1: 기본 스탯 (세로 막대)
     const page1 = $('<div>', { id: 'cmp-page-1', class: 'cmp-page' });
     const canvas1 = $('<canvas>', { id: 'chart-stat', height: 180 });
     page1.append(canvas1);
     content.append(page1);
 
-    // 탭 2: 스킬 쿨타임
+    // 탭 2: 스킬 쿨타임 (가로 슬라이드 탄력 애니메이션)
     const page2 = $('<div>', { id: 'cmp-page-2', class: 'cmp-page', css: { display: 'none' } });
     const canvas2 = $('<canvas>', { id: 'chart-skill', height: 180 });
     page2.append(canvas2);
     content.append(page2);
 
-    // 탭 3: 스킬 사거리
+    // 탭 3: 스킬 사거리 (레이더 커버리지 차트)
     const page3 = $('<div>', { id: 'cmp-page-3', class: 'cmp-page', css: { display: 'none' } });
-    const canvas3 = $('<canvas>', { id: 'chart-range', height: 180 });
+    const canvas3 = $('<canvas>', { id: 'chart-range', height: 200 });
     page3.append(canvas3);
     content.append(page3);
+
+    // 탭 4: 라이엇 카운터 & 상대법 팁
+    const page4 = $('<div>', { id: 'cmp-page-4', class: 'cmp-page', css: { display: 'none', padding: '10px' } });
+    
+    const allyTipsHtml = (c1.allytips && c1.allytips.length) 
+        ? c1.allytips.map(t => `<li style="margin-bottom:6px; color:#dcdde1;">${t}</li>`).join('') 
+        : '<li style="color:#888;">등록된 아군 운용 팁이 없습니다.</li>';
+
+    const enemyTipsHtml = (c2.enemytips && c2.enemytips.length) 
+        ? c2.enemytips.map(t => `<li style="margin-bottom:6px; color:#ff7979;">${t}</li>`).join('') 
+        : '<li style="color:#888;">등록된 대처 카운터 팁이 없습니다.</li>';
+
+    const tipBox = $(`
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div style="background:rgba(0,168,255,0.08); border:1px solid rgba(0,168,255,0.3); border-radius:10px; padding:14px;">
+                <h4 style="margin:0 0 10px 0; color:var(--blue-accent); font-size:14px;">💡 ${c1.name} 핵심 플레이 팁</h4>
+                <ul style="margin:0; padding-left:18px; font-size:13px; line-height:1.5;">${allyTipsHtml}</ul>
+            </div>
+            <div style="background:rgba(232,65,24,0.08); border:1px solid rgba(232,65,24,0.3); border-radius:10px; padding:14px;">
+                <h4 style="margin:0 0 10px 0; color:var(--accent-color); font-size:14px;">⚠️ ${c2.name} 상대 대처법 & 카운터 포인트</h4>
+                <ul style="margin:0; padding-left:18px; font-size:13px; line-height:1.5;">${enemyTipsHtml}</ul>
+            </div>
+        </div>
+    `);
+    page4.append(tipBox);
+    content.append(page4);
 
     modal.append(content);
     $('body').append(modal);
@@ -569,98 +662,163 @@ async function compareSlots(myNum, enemyNum) {
         page3.show();
     });
 
-    // Chart.js 수치 숫자 표시 공통 옵션
-    const chartOptionsWithLabels = {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            datalabels: {
-                color: '#ffffff',
-                anchor: 'end',
-                align: 'top',
-                font: { weight: 'bold', size: 11 },
-                formatter: (val) => val || 0
-            }
-        }
-    };
+    btnTab4.on('click', function() {
+        $('.nav-tab-btn').removeClass('btn-primary active').addClass('btn-default');
+        $(this).removeClass('btn-default').addClass('btn-primary active');
+        $('.cmp-page').hide();
+        page4.show();
+    });
+
+    // --- Canvas 그라디언트 생성 유틸 ---
+    function makeGradient(ctx, topColor, bottomColor) {
+        const g = ctx.createLinearGradient(0, 0, 0, 220);
+        g.addColorStop(0, topColor);
+        g.addColorStop(1, bottomColor);
+        return g;
+    }
+
+    const ctxStat = document.getElementById('chart-stat').getContext('2d');
+    const ctxSkill = document.getElementById('chart-skill').getContext('2d');
+    const ctxRange = document.getElementById('chart-range').getContext('2d');
+
+    const blueGrad = makeGradient(ctxStat, '#00d2ff', 'rgba(0, 168, 255, 0.15)');
+    const redGrad = makeGradient(ctxStat, '#ff4757', 'rgba(232, 65, 24, 0.15)');
 
     const hasDataLabelsPlugin = typeof ChartDataLabels !== 'undefined';
     const chartPlugins = hasDataLabelsPlugin ? [ChartDataLabels] : [];
 
-    // 1. 기본 스탯 Chart
-    new Chart(document.getElementById('chart-stat').getContext('2d'), {
+    // 1. 기본 스탯 Chart (세로 팝핑 바)
+    new Chart(ctxStat, {
         type: 'bar',
         data: {
             labels: ['공격력', '방어력', '체력', '마나', '이동속도'],
             datasets: [
-                { label: c1.name, data: [c1.stats.attackdamage, c1.stats.armor, c1.stats.hp, c1.stats.mp, c1.stats.movespeed], backgroundColor: 'rgba(0, 168, 255, 0.8)' },
-                { label: c2.name, data: [c2.stats.attackdamage, c2.stats.armor, c2.stats.hp, c2.stats.mp, c2.stats.movespeed], backgroundColor: 'rgba(232, 65, 24, 0.8)' }
+                { label: c1.name, data: [c1.stats.attackdamage, c1.stats.armor, c1.stats.hp, c1.stats.mp, c1.stats.movespeed], backgroundColor: blueGrad, borderColor: '#00d2ff', borderWidth: 2, borderRadius: 6 },
+                { label: c2.name, data: [c2.stats.attackdamage, c2.stats.armor, c2.stats.hp, c2.stats.mp, c2.stats.movespeed], backgroundColor: redGrad, borderColor: '#ff4757', borderWidth: 2, borderRadius: 6 }
             ]
         },
         plugins: chartPlugins,
-        options: chartOptionsWithLabels
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            animation: { duration: 1000, easing: 'easeInOutQuart', delay: (ctx) => ctx.dataIndex * 100 },
+            plugins: {
+                legend: { labels: { color: '#fff', font: { weight: 'bold' } } },
+                datalabels: { color: '#fff', anchor: 'end', align: 'top', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 4 }
+            },
+            scales: {
+                x: { ticks: { color: '#e0e0e0' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.08)' } }
+            }
+        }
     });
 
-    // 2. 스킬 쿨타임 Chart (Q, W, E, R)
+    // 2. 스킬 쿨타임 Chart (가로 슬라이드 탄력 Bounce 애니메이션)
     const spellKeys = ['Q', 'W', 'E', 'R'];
     const c1Cooldowns = c1.spells.map((s, idx) => ({ key: spellKeys[idx], cd: s.cooldown[0] || 0 }));
     const c2Cooldowns = c2.spells.map((s, idx) => ({ key: spellKeys[idx], cd: s.cooldown[0] || 0 }));
 
-    new Chart(document.getElementById('chart-skill').getContext('2d'), {
+    new Chart(ctxSkill, {
         type: 'bar',
         data: {
             labels: spellKeys.map(k => `스킬 [${k}]`),
             datasets: [
-                { label: `${c1.name} 쿨타임(초)`, data: c1Cooldowns.map(c => c.cd), backgroundColor: 'rgba(0, 168, 255, 0.8)' },
-                { label: `${c2.name} 쿨타임(초)`, data: c2Cooldowns.map(c => c.cd), backgroundColor: 'rgba(232, 65, 24, 0.8)' }
+                { label: `${c1.name} 쿨타임(초)`, data: c1Cooldowns.map(c => c.cd), backgroundColor: blueGrad, borderColor: '#00d2ff', borderWidth: 2, borderRadius: 6 },
+                { label: `${c2.name} 쿨타임(초)`, data: c2Cooldowns.map(c => c.cd), backgroundColor: redGrad, borderColor: '#ff4757', borderWidth: 2, borderRadius: 6 }
             ]
         },
         plugins: chartPlugins,
-        options: chartOptionsWithLabels
+        options: {
+            indexAxis: 'y', // 가로 슬라이드 차트로 변환
+            responsive: true,
+            maintainAspectRatio: true,
+            animation: {
+                duration: 1300,
+                easing: 'easeOutBack', // 탄력 있는 바운스 애니메이션
+                delay: (ctx) => ctx.dataIndex * 150
+            },
+            plugins: {
+                legend: { labels: { color: '#fff', font: { weight: 'bold' } } },
+                datalabels: { color: '#fff', anchor: 'end', align: 'right', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 4, formatter: (v) => `${v}초` }
+            },
+            scales: {
+                x: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                y: { ticks: { color: '#e0e0e0', font: { weight: 'bold' } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
     });
 
-    // 3. 스킬 사거리 Chart (Q, W, E, R)
+    // 3. 스킬 사거리 Chart (스파이더 레이더 차트 Radar Map)
     const c1Ranges = c1.spells.map(s => parseInt(s.rangeBurn) || 0);
     const c2Ranges = c2.spells.map(s => parseInt(s.rangeBurn) || 0);
 
-    new Chart(document.getElementById('chart-range').getContext('2d'), {
-        type: 'bar',
+    new Chart(ctxRange, {
+        type: 'radar',
         data: {
-            labels: spellKeys.map(k => `스킬 [${k}]`),
+            labels: spellKeys.map(k => `스킬 [${k}] 사거리`),
             datasets: [
-                { label: `${c1.name} 사거리`, data: c1Ranges, backgroundColor: 'rgba(68, 189, 50, 0.8)' },
-                { label: `${c2.name} 사거리`, data: c2Ranges, backgroundColor: 'rgba(251, 197, 49, 0.8)' }
+                { label: c1.name, data: c1Ranges, backgroundColor: 'rgba(0, 210, 255, 0.25)', borderColor: '#00d2ff', pointBackgroundColor: '#00d2ff', pointRadius: 5 },
+                { label: c2.name, data: c2Ranges, backgroundColor: 'rgba(255, 71, 87, 0.25)', borderColor: '#ff4757', pointBackgroundColor: '#ff4757', pointRadius: 5 }
             ]
         },
         plugins: chartPlugins,
-        options: chartOptionsWithLabels
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            animation: {
+                duration: 1400,
+                easing: 'easeOutElastic'
+            },
+            plugins: {
+                legend: { labels: { color: '#fff', font: { weight: 'bold' } } },
+                datalabels: { color: '#fff', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: 3 }
+            },
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(255,255,255,0.15)' },
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    pointLabels: { color: '#ffffff', font: { weight: 'bold', size: 12 } },
+                    ticks: { display: false }
+                }
+            }
+        }
     });
 }
 
-// 요소 드래그 이동 유틸리티 함수 (창 이동 기능)
+// 요소 드래그 이동 유틸리티 함수 (순간이동 튐 없는 Smooth Draggable)
 function makeElementDraggable(dragHandle, targetElement) {
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
     dragHandle.onmousedown = dragMouseDown;
 
     function dragMouseDown(e) {
         if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
         e.preventDefault();
-        pos3 = e.clientX;
-        pos4 = e.clientY;
+
+        // 현재 모달의 화면상 실제 픽셀 위치를 즉시 추출
+        const rect = targetElement.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
+
+        // transform 제거 후 픽셀 좌표계 고정 (순간이동 튐 방지)
+        targetElement.style.transform = 'none';
+        targetElement.style.margin = '0';
+        targetElement.style.left = `${initialLeft}px`;
+        targetElement.style.top = `${initialTop}px`;
+
+        startX = e.clientX;
+        startY = e.clientY;
+
         document.onmouseup = closeDragElement;
         document.onmousemove = elementDrag;
     }
 
     function elementDrag(e) {
         e.preventDefault();
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
 
-        targetElement.style.transform = 'none';
-        targetElement.style.top = (targetElement.offsetTop - pos2) + 'px';
-        targetElement.style.left = (targetElement.offsetLeft - pos1) + 'px';
+        targetElement.style.left = `${initialLeft + dx}px`;
+        targetElement.style.top = `${initialTop + dy}px`;
     }
 
     function closeDragElement() {
