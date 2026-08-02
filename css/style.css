@@ -20,15 +20,17 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
     font-family: var(--font-family);
     background-color: var(--bg-primary);
     color: var(--text-primary);
     margin: 0;
     padding: 0;
     padding-top: 60px; /* 헤더 높이 확보 */
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* --- 상단 네비게이션 헤더 --- */
@@ -429,5 +431,105 @@ body {
     border-radius: 12px !important;
     overflow-y: auto !important;
     padding: 20px !important;
+}
+
+/* --- 모바일 스크린 반응형 디자인 (@media max-width 768px) --- */
+@media (max-width: 768px) {
+    html, body {
+        padding-top: 55px !important;
+        height: auto !important;
+        min-height: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        position: relative !important;
+    }
+
+    .app-header {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10000 !important;
+    }
+
+    .navbar-collapse {
+        max-height: 80vh !important;
+        overflow-y: auto !important;
+        background: var(--header-bg) !important;
+        padding: 10px !important;
+    }
+
+    .app-container {
+        height: auto !important;
+        min-height: calc(100vh - 55px) !important;
+        overflow-y: visible !important;
+        padding: 6px !important;
+    }
+
+    .top-container, .split-container {
+        display: block !important;
+        flex-direction: column !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .split-section {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+        margin: 10px 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
+    }
+
+    .section-body {
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
+
+    #info-container, #main-container, #memo-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 모바일에서는 드래그 구분선을 클릭/터치할 수 없게 차단하여 화면이 안 굳게 방지 */
+    .divider, .vertical-divider, .horizontal-divider {
+        display: none !important;
+        pointer-events: none !important;
+    }
+
+    .header-actions {
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        margin-top: 6px !important;
+    }
+
+    .header-actions .btn {
+        margin-bottom: 4px !important;
+    }
+
+    /* 드래그 팝업 모달 모바일 최적화 */
+    .modal-dialog, .compare-dialog-modal {
+        width: 96% !important;
+        max-width: 96% !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
+    .modal-content {
+        width: 100% !important;
+        max-height: 88vh !important;
+        padding: 12px !important;
+    }
 }
 

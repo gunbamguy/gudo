@@ -384,11 +384,12 @@ function insertSpellImageToEditor(imgName, spellName, key) {
     if ($targetEditor.length && $targetEditor.summernote) {
         $targetEditor.summernote('focus');
         
-        // 이미지 HTML 삽입
-        const html = `<img src="${imgUrl}" alt="${spellName}" title="[${key}] ${spellName}" style="width:28px; height:28px; border-radius:4px; vertical-align:middle; margin:0 3px; border:1px solid rgba(255,255,255,0.2);"/>&nbsp;`;
+        // AppState.insertedIconSize 크기(기본 38px)를 사용하여 크게 삽입
+        const size = AppState.insertedIconSize || 38;
+        const html = `<img src="${imgUrl}" alt="${spellName}" title="[${key}] ${spellName}" style="width:${size}px; height:${size}px; border-radius:5px; vertical-align:middle; margin:0 3px; border:1px solid rgba(255,255,255,0.25);"/>&nbsp;`;
         $targetEditor.summernote('pasteHTML', html);
         
-        // DOM Range 수준에서 커서를 에디터 맨 끝 텍스트 노드로 강제 이동 (커서 고정 현상 100% 방지)
+        // DOM Range 커서 이동
         setTimeout(() => {
             $targetEditor.summernote('focus');
             const editable = $targetEditor.next('.note-editor').find('.note-editable')[0] || $targetEditor.siblings('.note-editor').find('.note-editable')[0];
@@ -396,7 +397,7 @@ function insertSpellImageToEditor(imgName, spellName, key) {
                 const range = document.createRange();
                 const sel = window.getSelection();
                 range.selectNodeContents(editable);
-                range.collapse(false); // 맨 끝 텍스트 노드로 강제 이동
+                range.collapse(false);
                 sel.removeAllRanges();
                 sel.addRange(range);
             }
@@ -830,6 +831,7 @@ function makeElementDraggable(dragHandle, targetElement) {
 // 드래그바 초기화 함수 (상하)
 function initializeHorizontalDrag() {
     const horizontalDivider = document.getElementById('horizontal-divider');
+    if (!horizontalDivider) return;
     let isDragging = false;
 
     horizontalDivider.addEventListener('mousedown', function (e) {
@@ -846,7 +848,6 @@ function initializeHorizontalDrag() {
         const containerHeight = $('#container').height();
         let newTopHeight = pointerRelativeYpos - (horizontalDivider.offsetHeight / 2);
 
-        // 최소 높이 설정
         const minTopHeight = 100;
         const maxTopHeight = containerHeight - 200;
 
@@ -856,7 +857,6 @@ function initializeHorizontalDrag() {
         $('#top-container').css('flex-basis', `${newTopHeight}px`);
         $('#formation-container').css('flex-basis', `${containerHeight - newTopHeight - horizontalDivider.offsetHeight}px`);
 
-        // 추가: memo-container의 최소 너비 보장
         if ($('#memo-container').width() < 300) {
             $('#memo-container').css('min-width', '300px');
         }
@@ -870,8 +870,6 @@ function initializeHorizontalDrag() {
     });
 }
 
-
-
 function generateExportData() {
     const exportData = {
         version: AppState.version,
@@ -883,7 +881,7 @@ function generateExportData() {
     return JSON.stringify(exportData);
 }
 
-// --- 룬 선택 시스템 모달 (Rune Selection System) ---
+// --- 룬 선택 시스템 모달 (Rune Selection System - Central Grid & Size Controller) ---
 async function openRuneSelectionModal() {
     const runes = await DataDragonService.getRunes();
     if (!runes || !runes.length) {
@@ -893,22 +891,101 @@ async function openRuneSelectionModal() {
 
     $('#rune-modal').remove();
 
-    const modal = $('<div>', { class: 'modal', id: 'rune-modal', css: { display: 'flex', zIndex: 999999 } });
-    const content = $('<div>', { class: 'modal-content', css: { width: '90%', maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto' } });
+    const modalWidth = Math.min(window.innerWidth * 0.88, 850);
+    const modalHeight = Math.min(window.innerHeight * 0.85, 700);
+    const initialLeft = Math.max((window.innerWidth - modalWidth) / 2, 10);
+    const initialTop = Math.max((window.innerHeight - modalHeight) / 2, 10);
 
-    const header = $('<div>', { css: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' } });
-    header.append('<h3 style="margin:0; color:#fff;">🔮 룬 선택 패널 <small style="font-size:11px; color:#aaa;">(룬 클릭 시 활성 에디터에 삽입)</small></h3>');
+    const modal = $('<div>', {
+        class: 'modal compare-dialog-modal',
+        id: 'rune-modal',
+        css: {
+            display: 'block',
+            position: 'fixed',
+            top: `${initialTop}px`,
+            left: `${initialLeft}px`,
+            transform: 'none',
+            zIndex: 9999999,
+            width: `${modalWidth}px`,
+            background: 'none',
+            boxShadow: 'none'
+        }
+    });
+
+    const content = $('<div>', {
+        class: 'modal-content draggable-modal-content',
+        css: {
+            width: '100%',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            background: 'var(--bg-secondary)',
+            border: '2px solid #9c88ff',
+            boxShadow: '0 0 50px rgba(156, 136, 255, 0.4)',
+            borderRadius: '14px',
+            padding: '20px'
+        }
+    });
+
+    const header = $('<div>', {
+        id: 'rune-modal-header',
+        css: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
+            paddingBottom: '10px',
+            borderBottom: '1px solid var(--border-color)',
+            cursor: 'move',
+            userSelect: 'none'
+        }
+    });
+    header.append('<h3 style="margin:0; color:#fff; font-size:16px; font-weight:700;">✋ 🔮 롤 룬 세팅 패널 <small style="font-size:11px; color:#aaa; font-weight:normal;">(창 이동 가능 / 룬 클릭 시 활성 에디터에 대형 삽입)</small></h3>');
     const closeBtn = $('<button>', { text: '✕ 닫기', class: 'btn btn-danger btn-sm', click: () => modal.remove() });
     header.append(closeBtn);
     content.append(header);
 
-    // 룬 메인 탭
-    const tabNav = $('<div>', { class: 'btn-group', css: { marginBottom: '15px', width: '100%', display: 'flex' } });
+    // 아이콘 크기 조절 옵션 컨트롤바
+    const curSize = AppState.insertedIconSize || 38;
+    const sizeControlBar = $(`
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.35); padding:8px 14px; border-radius:8px; margin-bottom:14px; border:1px solid rgba(255,255,255,0.08);">
+            <span style="font-size:12px; color:#ddd; font-weight:bold;">🖼️ 에디터 삽입 아이콘 크기 설정:</span>
+            <div class="btn-group btn-group-sm" id="icon-size-selector">
+                <button type="button" class="btn ${curSize === 30 ? 'btn-primary' : 'btn-default'}" data-size="30">보통 (30px)</button>
+                <button type="button" class="btn ${curSize === 38 ? 'btn-primary' : 'btn-default'}" data-size="38">크게 (38px)</button>
+                <button type="button" class="btn ${curSize === 48 ? 'btn-primary' : 'btn-default'}" data-size="48">왕대형 (48px)</button>
+            </div>
+        </div>
+    `);
+
+    sizeControlBar.find('#icon-size-selector button').on('click', function() {
+        const newSize = parseInt($(this).attr('data-size')) || 38;
+        AppState.insertedIconSize = newSize;
+        sizeControlBar.find('button').removeClass('btn-primary').addClass('btn-default');
+        $(this).removeClass('btn-default').addClass('btn-primary');
+    });
+
+    content.append(sizeControlBar);
+
+    // 룬 시스템 2대 페이지 모드 (오리지널 vs 클래식)
+    const modeNav = $(`
+        <div class="btn-group" style="margin-bottom:14px; display:flex; width:100%;">
+            <button type="button" class="btn btn-primary rune-mode-btn" data-mode="original" style="flex:1; font-weight:bold;">⚡ 오리지널 룬 (현재 시즌)</button>
+            <button type="button" class="btn btn-default rune-mode-btn" data-mode="classic" style="flex:1; font-weight:bold;">📜 클래식 룬 (구 룬/특성 시스템)</button>
+        </div>
+    `);
+
+    content.append(modeNav);
+
+    // 1. 오리지널 룬 메인 영역
+    const originalContainer = $('<div>', { id: 'rune-original-container' });
+    const runeColors = ['#c8aa6e', '#dc4040', '#9c88ff', '#2ed573', '#00a8ff'];
+    const tabNav = $('<div>', { class: 'btn-group', css: { marginBottom: '16px', width: '100%', display: 'flex', gap: '4px' } });
+    
     runes.forEach((rTree, idx) => {
         const btn = $('<button>', {
             class: `btn ${idx === 0 ? 'btn-primary active' : 'btn-default'} rune-tab-btn`,
-            text: rTree.name,
-            css: { flex: 1 }
+            html: `<span style="color:${runeColors[idx] || '#fff'}; font-weight:bold;">✦ ${rTree.name}</span>`,
+            css: { flex: 1, fontSize: '13px', padding: '8px 0' }
         });
         btn.on('click', function() {
             $('.rune-tab-btn').removeClass('btn-primary active').addClass('btn-default');
@@ -918,28 +995,27 @@ async function openRuneSelectionModal() {
         });
         tabNav.append(btn);
     });
-    content.append(tabNav);
+    originalContainer.append(tabNav);
 
-    // 룬 트리가 렌더링될 영역
     runes.forEach((rTree, idx) => {
-        const page = $('<div>', { id: `rune-page-${rTree.id}`, class: 'rune-page', css: { display: idx === 0 ? 'block' : 'none' } });
+        const page = $('<div>', { id: `rune-page-${rTree.id}`, class: 'rune-page', css: { display: idx === 0 ? 'block' : 'none', textAlign: 'center' } });
         
         rTree.slots.forEach((s, sIdx) => {
             const slotTitle = sIdx === 0 ? '🌟 핵심 룬 (Keystone)' : `보조 룬 슬롯 ${sIdx}`;
-            page.append(`<h5 style="color:#fbc531; margin:12px 0 8px 0;">${slotTitle}</h5>`);
+            page.append(`<h5 style="color:${runeColors[idx] || '#fbc531'}; margin:16px 0 10px 0; font-weight:700; text-align:center; font-size:14px;">${slotTitle}</h5>`);
             
-            const grid = $('<div>', { css: { display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' } });
+            const grid = $('<div>', { css: { display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '14px' } });
             s.runes.forEach(rune => {
                 const runeUrl = `https://ddragon.leagueoflegends.com/cdn/img/${rune.icon}`;
                 const card = $(`
-                    <div class="rune-card" title="${rune.name}: ${rune.shortDesc}" style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.4); padding:8px 12px; border-radius:8px; cursor:pointer; border:1px solid rgba(255,255,255,0.1); transition:all 0.2s ease;">
-                        <img src="${runeUrl}" alt="${rune.name}" style="width:36px; height:36px;"/>
-                        <span style="font-weight:bold; color:#fff; font-size:12px;">${rune.name}</span>
+                    <div class="rune-card" title="${rune.name}: ${rune.shortDesc.replace(/<[^>]*>?/gm, '')}" style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.5); padding:8px 14px; border-radius:10px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); transition:all 0.2s ease;">
+                        <img src="${runeUrl}" alt="${rune.name}" style="width:${sIdx === 0 ? '42px' : '34px'}; height:${sIdx === 0 ? '42px' : '34px'};"/>
+                        <span style="font-weight:bold; color:#fff; font-size:13px;">${rune.name}</span>
                     </div>
                 `);
                 card.hover(
-                    function() { $(this).css({ transform: 'scale(1.05)', borderColor: '#00d2ff' }); },
-                    function() { $(this).css({ transform: 'scale(1)', borderColor: 'rgba(255,255,255,0.1)' }); }
+                    function() { $(this).css({ transform: 'translateY(-3px)', borderColor: runeColors[idx] || '#00d2ff', boxShadow: `0 0 14px ${runeColors[idx] || '#00d2ff'}` }); },
+                    function() { $(this).css({ transform: 'translateY(0)', borderColor: 'rgba(255,255,255,0.15)', boxShadow: 'none' }); }
                 );
                 card.on('click', () => {
                     insertRuneImageToEditor(runeUrl, rune.name);
@@ -948,15 +1024,87 @@ async function openRuneSelectionModal() {
             });
             page.append(grid);
         });
-        content.append(page);
+        originalContainer.append(page);
+    });
+
+    content.append(originalContainer);
+
+    // 2. 클래식 룬 메인 영역 (구 롤 룬/특성 시스템)
+    const classicContainer = $('<div>', { id: 'rune-classic-container', css: { display: 'none', textAlign: 'center' } });
+    const classicRunesData = [
+        { type: '🔴 표식 (Mark)', color: '#e84118', items: [
+            { name: '상급 공격력 표식', stat: '+0.95 공격력', icon: '7201_Mark_1.png' },
+            { name: '상급 방어구 관통력 표식', stat: '+1.28 방어구 관통력', icon: '7201_Mark_2.png' },
+            { name: '상급 마법 관통력 표식', stat: '+0.87 마법 관통력', icon: '7201_Mark_3.png' },
+            { name: '상급 공격 속도 표식', stat: '+1.7% 공격 속도', icon: '7201_Mark_4.png' }
+        ]},
+        { type: '🟡 인장 (Seal)', color: '#fbc531', items: [
+            { name: '상급 방어력 인장', stat: '+1.0 방어력', icon: '7202_Seal_1.png' },
+            { name: '상급 성장 체력 인장', stat: '18레벨 체력 +24', icon: '7202_Seal_2.png' },
+            { name: '상급 마나 재생 인장', stat: '+0.41 마나 재생/5초', icon: '7202_Seal_3.png' }
+        ]},
+        { type: '🔵 문양 (Glyph)', color: '#00a8ff', items: [
+            { name: '상급 마법 저항력 문양', stat: '+1.34 마법 저항력', icon: '7203_Glyph_1.png' },
+            { name: '상급 주문력 문양', stat: '+1.19 주문력', icon: '7203_Glyph_2.png' },
+            { name: '상급 재쿨감 문양', stat: '-0.83% 재사용 대기시간', icon: '7203_Glyph_3.png' }
+        ]},
+        { type: '🟣 정수 (Quintessence)', color: '#9c88ff', items: [
+            { name: '상급 이동 속도 정수', stat: '+1.5% 이동 속도', icon: '7204_Quint_1.png' },
+            { name: '상급 공격력 정수', stat: '+2.25 공격력', icon: '7204_Quint_2.png' },
+            { name: '상급 주문력 정수', stat: '+4.95 주문력', icon: '7204_Quint_3.png' },
+            { name: '상급 생명력 흡수 정수', stat: '+1.5% 생명력 흡수', icon: '7204_Quint_4.png' }
+        ]}
+    ];
+
+    classicRunesData.forEach(cGroup => {
+        classicContainer.append(`<h5 style="color:${cGroup.color}; margin:16px 0 10px 0; font-weight:700; text-align:center;">${cGroup.type}</h5>`);
+        const cGrid = $('<div>', { css: { display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '14px' } });
+        
+        cGroup.items.forEach(cRune => {
+            const fallbackIconUrl = `https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/7200_Domination.png`;
+            const card = $(`
+                <div class="rune-card" title="${cRune.name} (${cRune.stat})" style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.5); padding:8px 14px; border-radius:10px; cursor:pointer; border:1px solid ${cGroup.color}; transition:all 0.2s ease;">
+                    <span style="font-size:18px;">💎</span>
+                    <div style="display:flex; flex-direction:column; text-align:left;">
+                        <span style="font-weight:bold; color:#fff; font-size:12px;">${cRune.name}</span>
+                        <span style="font-size:10px; color:${cGroup.color}; font-weight:bold;">${cRune.stat}</span>
+                    </div>
+                </div>
+            `);
+            card.on('click', () => {
+                insertRuneImageToEditor(fallbackIconUrl, cRune.name);
+            });
+            cGrid.append(card);
+        });
+        classicContainer.append(cGrid);
+    });
+
+    content.append(classicContainer);
+
+    // 룬 모드 전환 클릭 핸들러
+    modeNav.find('.rune-mode-btn').on('click', function() {
+        modeNav.find('.rune-mode-btn').removeClass('btn-primary').addClass('btn-default');
+        $(this).removeClass('btn-default').addClass('btn-primary');
+        const mode = $(this).attr('data-mode');
+        if (mode === 'classic') {
+            originalContainer.hide();
+            classicContainer.show();
+        } else {
+            classicContainer.hide();
+            originalContainer.show();
+        }
     });
 
     modal.append(content);
     $('body').append(modal);
+
+    // 드래그 이동 기능 적용
+    makeElementDraggable(header[0], modal[0]);
 }
 
 function insertRuneImageToEditor(runeUrl, runeName) {
-    const html = `<img src="${runeUrl}" alt="${runeName}" title="${runeName}" style="width:28px; height:28px; vertical-align:middle; margin:0 3px;"/>&nbsp;`;
+    const size = AppState.insertedIconSize || 38;
+    const html = `<img src="${runeUrl}" alt="${runeName}" title="${runeName}" style="width:${size}px; height:${size}px; vertical-align:middle; margin:0 3px; border-radius:5px;"/>&nbsp;`;
     const targetSelector = AppState.lastActiveEditor || '#editor';
     const $targetEditor = $(targetSelector);
 
@@ -978,70 +1126,235 @@ async function openItemComparisonModal() {
 
     $('#item-modal').remove();
 
-    const modal = $('<div>', { class: 'modal', id: 'item-modal', css: { display: 'flex', zIndex: 999999 } });
-    const content = $('<div>', { class: 'modal-content', css: { width: '92%', maxWidth: '900px', maxHeight: '92vh', overflowY: 'auto' } });
+    const modalWidth = Math.min(window.innerWidth * 0.90, 860);
+    const modalHeight = Math.min(window.innerHeight * 0.85, 700);
+    const initialLeft = Math.max((window.innerWidth - modalWidth) / 2, 10);
+    const initialTop = Math.max((window.innerHeight - modalHeight) / 2, 10);
 
-    const header = $('<div>', { css: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' } });
-    header.append('<h3 style="margin:0; color:#fff;">⚔️ 아이템 스탯 비교 차트 <small style="font-size:11px; color:#aaa;">(아이템 선택 시 스탯 비교 차트 렌더링 & 클릭 시 에디터 삽입)</small></h3>');
+    const modal = $('<div>', {
+        class: 'modal compare-dialog-modal',
+        id: 'item-modal',
+        css: {
+            display: 'block',
+            position: 'fixed',
+            top: `${initialTop}px`,
+            left: `${initialLeft}px`,
+            transform: 'none',
+            zIndex: 9999999,
+            width: `${modalWidth}px`,
+            background: 'none',
+            boxShadow: 'none'
+        }
+    });
+
+    const content = $('<div>', {
+        class: 'modal-content draggable-modal-content',
+        css: {
+            width: '100%',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            background: 'var(--bg-secondary)',
+            border: '2px solid #fbc531',
+            boxShadow: '0 0 50px rgba(251, 197, 49, 0.4)',
+            borderRadius: '14px',
+            padding: '20px'
+        }
+    });
+
+    const header = $('<div>', {
+        id: 'item-modal-header',
+        css: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
+            paddingBottom: '10px',
+            borderBottom: '1px solid var(--border-color)',
+            cursor: 'move',
+            userSelect: 'none'
+        }
+    });
+    header.append('<h3 style="margin:0; color:#fff; font-size:16px; font-weight:700;">✋ ⚔️ 아이템 스탯 비교 & 템트리 패널 <small style="font-size:11px; color:#aaa; font-weight:normal;">(아이템 선택 후 삽입 버튼을 누르면 메모장에 찍힙니다)</small></h3>');
     const closeBtn = $('<button>', { text: '✕ 닫기', class: 'btn btn-danger btn-sm', click: () => modal.remove() });
     header.append(closeBtn);
     content.append(header);
 
+    // 아이콘 크기 조절 컨트롤바
+    const curSize = AppState.insertedIconSize || 38;
+    const sizeControlBar = $(`
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.35); padding:8px 14px; border-radius:8px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.08);">
+            <span style="font-size:12px; color:#ddd; font-weight:bold;">🖼️ 에디터 삽입 아이콘 크기 설정:</span>
+            <div class="btn-group btn-group-sm" id="item-icon-size-selector">
+                <button type="button" class="btn ${curSize === 30 ? 'btn-primary' : 'btn-default'}" data-size="30">보통 (30px)</button>
+                <button type="button" class="btn ${curSize === 38 ? 'btn-primary' : 'btn-default'}" data-size="38">크게 (38px)</button>
+                <button type="button" class="btn ${curSize === 48 ? 'btn-primary' : 'btn-default'}" data-size="48">왕대형 (48px)</button>
+            </div>
+        </div>
+    `);
+
+    sizeControlBar.find('#item-icon-size-selector button').on('click', function() {
+        const newSize = parseInt($(this).attr('data-size')) || 38;
+        AppState.insertedIconSize = newSize;
+        sizeControlBar.find('button').removeClass('btn-primary').addClass('btn-default');
+        $(this).removeClass('btn-default').addClass('btn-primary');
+    });
+
+    content.append(sizeControlBar);
+
+    // 아이템 카테고리 필터 탭
+    let currentCategory = 'ALL';
+    const categoryNav = $(`
+        <div class="btn-group btn-group-sm" style="margin-bottom:12px; display:flex; width:100%;">
+            <button type="button" class="btn btn-primary item-cat-btn" data-cat="ALL" style="flex:1;">ALL 전체</button>
+            <button type="button" class="btn btn-default item-cat-btn" data-cat="AD" style="flex:1;">⚔️ 물리 (AD)</button>
+            <button type="button" class="btn btn-default item-cat-btn" data-cat="AP" style="flex:1;">🔮 마법 (AP)</button>
+            <button type="button" class="btn btn-default item-cat-btn" data-cat="DEF" style="flex:1;">🛡️ 방어/체력</button>
+            <button type="button" class="btn btn-default item-cat-btn" data-cat="BOOTS" style="flex:1;">👞 신발</button>
+        </div>
+    `);
+
+    categoryNav.find('.item-cat-btn').on('click', function() {
+        categoryNav.find('.item-cat-btn').removeClass('btn-primary').addClass('btn-default');
+        $(this).removeClass('btn-default').addClass('btn-primary');
+        currentCategory = $(this).attr('data-cat');
+        renderItemGrid($('#item-search-input').val().trim());
+    });
+
+    content.append(categoryNav);
+
     // 아이템 검색창
     const searchBar = $(`
-        <div style="margin-bottom:15px; display:flex; gap:10px;">
-            <input type="text" id="item-search-input" class="form-control" placeholder="아이템 이름 검색 (예: 무한의 대검, 존야)..." style="background:var(--card-bg); color:#fff; border:1px solid var(--border-color);"/>
+        <div style="margin-bottom:12px; display:flex; gap:10px;">
+            <input type="text" id="item-search-input" class="form-control" placeholder="🔍 아이템 이름 검색 (예: 무한의 대검, 존야, 몰락)..." style="background:var(--card-bg); color:#fff; border:1px solid var(--border-color); font-size:13px;"/>
         </div>
     `);
     content.append(searchBar);
 
-    // 차트 영역
-    const chartBox = $('<div>', { css: { background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '10px', marginBottom: '15px' } });
-    const canvas = $('<canvas>', { id: 'item-chart', height: 180 });
+    // 스탯 비교 차트 영역
+    const chartBox = $('<div>', { css: { background: 'rgba(0,0,0,0.35)', padding: '12px', borderRadius: '10px', marginBottom: '14px', border: '1px solid rgba(255,255,255,0.08)' } });
+    const canvas = $('<canvas>', { id: 'item-chart', height: 160 });
     chartBox.append(canvas);
     content.append(chartBox);
 
-    // 선택된 아이템 태그 목록
+    // 선택된 아이템 태그 목록 및 카드 Grid
     const selectedItemIds = [];
-    const itemGrid = $('<div>', { id: 'item-grid-list', css: { display: 'flex', flexWrap: 'wrap', gap: '10px', maxHeight: '250px', overflowY: 'auto' } });
+    const itemGrid = $('<div>', { id: 'item-grid-list', css: { display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', maxHeight: '200px', overflowY: 'auto', padding: '4px' } });
     content.append(itemGrid);
 
+    // 선택한 아이템 메모장 일괄 삽입 액션 바
+    const insertActionBar = $(`
+        <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.45); padding:10px 16px; border-radius:10px; border:1px solid #fbc531;">
+            <span id="selected-item-count-text" style="color:#fff; font-size:13px; font-weight:bold;">선택된 아이템: <span style="color:#fbc531;">0</span>개</span>
+            <button id="insert-selected-items-btn" class="btn btn-warning btn-sm" style="font-weight:bold;">📥 선택한 아이템 메모장에 삽입</button>
+        </div>
+    `);
+
+    insertActionBar.find('#insert-selected-items-btn').on('click', function() {
+        if (!selectedItemIds.length) {
+            alert('에디터에 삽입할 아이템을 목록에서 먼저 선택하세요.');
+            return;
+        }
+        const ver = AppState.version;
+        selectedItemIds.forEach(id => {
+            const item = items[id];
+            if (item) {
+                const imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ver}/img/item/${id}.png`;
+                insertItemImageToEditor(imgUrl, item.name);
+            }
+        });
+    });
+
+    content.append(insertActionBar);
+
+    // 아이템 스탯 요약 파싱 헬퍼
+    function getItemStatSummary(stats) {
+        if (!stats) return '';
+        const parts = [];
+        if (stats.FlatPhysicalDamageMod) parts.push(`AD +${stats.FlatPhysicalDamageMod}`);
+        if (stats.FlatMagicDamageMod) parts.push(`AP +${stats.FlatMagicDamageMod}`);
+        if (stats.FlatHPPool) parts.push(`HP +${stats.FlatHPPool}`);
+        if (stats.FlatArmorMod) parts.push(`방어 +${stats.FlatArmorMod}`);
+        if (stats.FlatSpellBlockMod) parts.push(`마저 +${stats.FlatSpellBlockMod}`);
+        if (stats.PercentAttackSpeedMod) parts.push(`공속 +${Math.round(stats.PercentAttackSpeedMod * 100)}%`);
+        if (stats.FlatCritChanceMod) parts.push(`치명타 +${Math.round(stats.FlatCritChanceMod * 100)}%`);
+        if (stats.FlatMovementSpeedMod) parts.push(`이속 +${stats.FlatMovementSpeedMod}`);
+        return parts.slice(0, 2).join(' | ');
+    }
+
+    // 아이템 배열 가공 & 정렬 (소환사의 협곡 전용 & 가격 내림차순)
     function renderItemGrid(filterText = '') {
         itemGrid.empty();
         const ver = AppState.version;
+        content.find('#selected-item-count-text').html(`선택된 아이템: <span style="color:#fbc531; font-size:14px;">${selectedItemIds.length}</span>개`);
 
+        const itemList = [];
         for (const id in items) {
             const item = items[id];
-            if (!item.gold || !item.gold.purchasable) continue; // 구매 불가 아이템 제외
+
+            // 클래식 & 정통 롤 아이템 수용 (구매 가능 상점 아이템 대상)
+            if (!item.gold || !item.gold.purchasable || item.gold.total < 300) continue;
+            if (item.inStore === false) continue;
+            if (item.tags && item.tags.includes('Trinket')) continue;
+
+            const tags = item.tags || [];
+            const stats = item.stats || {};
+
+            // 2. 카테고리별 정밀 필터링 판별
+            if (currentCategory === 'AD') {
+                const isAD = tags.includes('Damage') || tags.includes('CriticalStrike') || tags.includes('AttackSpeed') || (stats.FlatPhysicalDamageMod > 0);
+                if (!isAD) continue;
+            } else if (currentCategory === 'AP') {
+                const isAP = tags.includes('SpellDamage') || tags.includes('MagicPenetration') || (stats.FlatMagicDamageMod > 0);
+                if (!isAP) continue;
+            } else if (currentCategory === 'DEF') {
+                const isDEF = tags.includes('Health') || tags.includes('Armor') || tags.includes('SpellBlock') || tags.includes('HealthRegen') || (stats.FlatHPPool > 0) || (stats.FlatArmorMod > 0) || (stats.FlatSpellBlockMod > 0);
+                if (!isDEF) continue;
+            } else if (currentCategory === 'BOOTS') {
+                const isBoots = tags.includes('Boots');
+                if (!isBoots) continue;
+            }
+
             if (filterText && !item.name.includes(filterText)) continue;
 
+            itemList.push({ id, ...item });
+        }
+
+        // 가격 내림차순 정렬 (비싸고 완성도 높은 전설/핵심 아이템 상단 배치)
+        itemList.sort((a, b) => b.gold.total - a.gold.total);
+
+        itemList.forEach(item => {
+            const id = item.id;
             const isSelected = selectedItemIds.includes(id);
             const imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ver}/img/item/${id}.png`;
+            const statText = getItemStatSummary(item.stats);
 
             const card = $(`
-                <div class="item-card" style="display:flex; align-items:center; gap:6px; background:${isSelected ? 'rgba(0,168,255,0.3)' : 'rgba(0,0,0,0.4)'}; padding:6px 10px; border-radius:6px; cursor:pointer; border:1px solid ${isSelected ? '#00d2ff' : 'rgba(255,255,255,0.1)'};">
-                    <img src="${imgUrl}" alt="${item.name}" style="width:28px; height:28px; border-radius:4px;"/>
-                    <span style="font-size:12px; color:#fff;">${item.name}</span>
-                    <span style="font-size:10px; color:#fbc531; font-weight:bold;">${item.gold.total}G</span>
+                <div class="item-card" title="${item.name}: ${statText || '특수 아이템'}" style="display:flex; align-items:center; gap:8px; background:${isSelected ? 'rgba(0,168,255,0.4)' : 'rgba(0,0,0,0.5)'}; padding:6px 12px; border-radius:8px; cursor:pointer; border:1px solid ${isSelected ? '#00d2ff' : 'rgba(255,255,255,0.12)'}; transition:all 0.15s ease;">
+                    <img src="${imgUrl}" alt="${item.name}" style="width:30px; height:30px; border-radius:5px;"/>
+                    <div style="display:flex; flex-direction:column;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:12px; color:#fff; font-weight:700;">${item.name}</span>
+                            <span style="font-size:10px; color:#fbc531; font-weight:bold;">${item.gold.total}G</span>
+                        </div>
+                        ${statText ? `<span style="font-size:10px; color:#00a8ff; font-weight:bold;">${statText}</span>` : ''}
+                    </div>
                 </div>
             `);
 
-            card.on('click', function(e) {
-                // Shift나 Ctrl 없이 그냥 클릭하면 차트 선택 / 삽입
+            card.on('click', function() {
                 if (selectedItemIds.includes(id)) {
                     const idx = selectedItemIds.indexOf(id);
                     selectedItemIds.splice(idx, 1);
                 } else {
-                    if (selectedItemIds.length >= 5) selectedItemIds.shift();
+                    if (selectedItemIds.length >= 6) selectedItemIds.shift();
                     selectedItemIds.push(id);
                 }
-                insertItemImageToEditor(imgUrl, item.name);
                 renderItemGrid($('#item-search-input').val().trim());
                 updateItemChart();
             });
 
             itemGrid.append(card);
-        }
+        });
     }
 
     let itemChartInstance = null;
@@ -1049,14 +1362,13 @@ async function openItemComparisonModal() {
     function updateItemChart() {
         if (!selectedItemIds.length) return;
         const ctx = document.getElementById('item-chart').getContext('2d');
-        const ver = AppState.version;
 
         const labels = selectedItemIds.map(id => items[id].name);
         const adData = selectedItemIds.map(id => (items[id].stats ? items[id].stats.FlatPhysicalDamageMod || 0 : 0));
         const apData = selectedItemIds.map(id => (items[id].stats ? items[id].stats.FlatMagicDamageMod || 0 : 0));
         const hpData = selectedItemIds.map(id => (items[id].stats ? items[id].stats.FlatHPPool || 0 : 0));
         const armorData = selectedItemIds.map(id => (items[id].stats ? items[id].stats.FlatArmorMod || 0 : 0));
-        const goldData = selectedItemIds.map(id => (items[id].gold ? (items[id].gold.total / 10) || 0 : 0)); // 골드는 1/10 비율
+        const goldData = selectedItemIds.map(id => (items[id].gold ? (items[id].gold.total / 10) || 0 : 0));
 
         if (itemChartInstance) itemChartInstance.destroy();
 
@@ -1065,22 +1377,23 @@ async function openItemComparisonModal() {
             data: {
                 labels: labels,
                 datasets: [
-                    { label: '공격력(AD)', data: adData, backgroundColor: 'rgba(232, 65, 24, 0.8)' },
-                    { label: '주문력(AP)', data: apData, backgroundColor: 'rgba(156, 136, 255, 0.8)' },
-                    { label: '체력(HP)', data: hpData, backgroundColor: 'rgba(76, 209, 55, 0.8)' },
-                    { label: '방어력(Armor)', data: armorData, backgroundColor: 'rgba(251, 197, 49, 0.8)' },
-                    { label: '가격 (10G 단위)', data: goldData, backgroundColor: 'rgba(0, 168, 255, 0.6)' }
+                    { label: '공격력(AD)', data: adData, backgroundColor: 'rgba(232, 65, 24, 0.85)', borderRadius: 4 },
+                    { label: '주문력(AP)', data: apData, backgroundColor: 'rgba(156, 136, 255, 0.85)', borderRadius: 4 },
+                    { label: '체력(HP)', data: hpData, backgroundColor: 'rgba(76, 209, 55, 0.85)', borderRadius: 4 },
+                    { label: '방어력(Armor)', data: armorData, backgroundColor: 'rgba(251, 197, 49, 0.85)', borderRadius: 4 },
+                    { label: '가격 (10G 단위)', data: goldData, backgroundColor: 'rgba(0, 168, 255, 0.65)', borderRadius: 4 }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: true,
+                animation: { duration: 900, easing: 'easeInOutQuart' },
                 plugins: {
-                    legend: { labels: { color: '#fff' } }
+                    legend: { labels: { color: '#fff', font: { weight: 'bold' } } }
                 },
                 scales: {
-                    x: { ticks: { color: '#fff' } },
-                    y: { ticks: { color: '#aaa' } }
+                    x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.08)' } }
                 }
             }
         });
@@ -1093,11 +1406,13 @@ async function openItemComparisonModal() {
     modal.append(content);
     $('body').append(modal);
 
+    makeElementDraggable(header[0], modal[0]);
     renderItemGrid();
 }
 
 function insertItemImageToEditor(imgUrl, itemName) {
-    const html = `<img src="${imgUrl}" alt="${itemName}" title="${itemName}" style="width:28px; height:28px; border-radius:4px; vertical-align:middle; margin:0 3px; border:1px solid rgba(255,255,255,0.2);"/>&nbsp;`;
+    const size = AppState.insertedIconSize || 38;
+    const html = `<img src="${imgUrl}" alt="${itemName}" title="${itemName}" style="width:${size}px; height:${size}px; border-radius:5px; vertical-align:middle; margin:0 3px; border:1px solid rgba(255,255,255,0.25);"/>&nbsp;`;
     const targetSelector = AppState.lastActiveEditor || '#editor';
     const $targetEditor = $(targetSelector);
 

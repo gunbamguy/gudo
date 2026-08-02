@@ -11,6 +11,7 @@ const AppState = {
     selectedSlot: null,
     currentChampionId: null,
     lastActiveEditor: '#editor', // 클릭 및 활성화된 에디터 추적
+    insertedIconSize: 38, // 에디터 삽입 아이콘 크기 (38px 기본)
     formationMemos: {},
     selectedItemsData: [],
     sortableStats: new Set(),

@@ -84,8 +84,10 @@ function initSummernoteEditors() {
         height: 250,
         minHeight: 150,
         lang: 'ko-KR',
+        fontSizes: ['9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48'],
         toolbar: [
             ['insert', ['link', 'picture', 'youtubeLink', 'customPyeong', 'skillQ', 'skillW', 'skillE', 'skillR']],
+            ['fontsize', ['fontsize']],
             ['style', ['style']],
             ['font', ['bold', 'italic', 'underline', 'clear']],
             ['color', ['color']],
@@ -112,8 +114,10 @@ function initSummernoteEditors() {
         height: 250,
         minHeight: 150,
         lang: 'ko-KR',
+        fontSizes: ['9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48'],
         toolbar: [
             ['insert', ['link', 'picture', 'youtubeLink']],
+            ['fontsize', ['fontsize']],
             ['style', ['style']],
             ['font', ['bold', 'italic', 'underline', 'clear']],
             ['color', ['color']],
