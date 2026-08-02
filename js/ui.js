@@ -453,11 +453,11 @@ function addSlots() {
 
 function removeSlots() {
     if (AppState.myTeamSlots > 1) {
-        $('#my-team').find('.team').children().last().remove();
-        $('#enemy-team').find('.team').children().last().remove();
-        $('#comparison-buttons').children().last().remove();
         AppState.myTeamSlots--;
         AppState.enemyTeamSlots--;
+        initializeTeamSlots();
+    } else {
+        alert('최소 1개의 슬롯은 유지되어야 합니다.');
     }
 }
 
@@ -881,6 +881,231 @@ function generateExportData() {
         formationMemo: $('#formation-editor').length ? $('#formation-editor').summernote('code') : ''
     };
     return JSON.stringify(exportData);
+}
+
+// --- 룬 선택 시스템 모달 (Rune Selection System) ---
+async function openRuneSelectionModal() {
+    const runes = await DataDragonService.getRunes();
+    if (!runes || !runes.length) {
+        alert('룬 데이터를 불러오지 못했습니다.');
+        return;
+    }
+
+    $('#rune-modal').remove();
+
+    const modal = $('<div>', { class: 'modal', id: 'rune-modal', css: { display: 'flex', zIndex: 999999 } });
+    const content = $('<div>', { class: 'modal-content', css: { width: '90%', maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto' } });
+
+    const header = $('<div>', { css: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' } });
+    header.append('<h3 style="margin:0; color:#fff;">🔮 룬 선택 패널 <small style="font-size:11px; color:#aaa;">(룬 클릭 시 활성 에디터에 삽입)</small></h3>');
+    const closeBtn = $('<button>', { text: '✕ 닫기', class: 'btn btn-danger btn-sm', click: () => modal.remove() });
+    header.append(closeBtn);
+    content.append(header);
+
+    // 룬 메인 탭
+    const tabNav = $('<div>', { class: 'btn-group', css: { marginBottom: '15px', width: '100%', display: 'flex' } });
+    runes.forEach((rTree, idx) => {
+        const btn = $('<button>', {
+            class: `btn ${idx === 0 ? 'btn-primary active' : 'btn-default'} rune-tab-btn`,
+            text: rTree.name,
+            css: { flex: 1 }
+        });
+        btn.on('click', function() {
+            $('.rune-tab-btn').removeClass('btn-primary active').addClass('btn-default');
+            $(this).removeClass('btn-default').addClass('btn-primary active');
+            $('.rune-page').hide();
+            $(`#rune-page-${rTree.id}`).show();
+        });
+        tabNav.append(btn);
+    });
+    content.append(tabNav);
+
+    // 룬 트리가 렌더링될 영역
+    runes.forEach((rTree, idx) => {
+        const page = $('<div>', { id: `rune-page-${rTree.id}`, class: 'rune-page', css: { display: idx === 0 ? 'block' : 'none' } });
+        
+        rTree.slots.forEach((s, sIdx) => {
+            const slotTitle = sIdx === 0 ? '🌟 핵심 룬 (Keystone)' : `보조 룬 슬롯 ${sIdx}`;
+            page.append(`<h5 style="color:#fbc531; margin:12px 0 8px 0;">${slotTitle}</h5>`);
+            
+            const grid = $('<div>', { css: { display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' } });
+            s.runes.forEach(rune => {
+                const runeUrl = `https://ddragon.leagueoflegends.com/cdn/img/${rune.icon}`;
+                const card = $(`
+                    <div class="rune-card" title="${rune.name}: ${rune.shortDesc}" style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.4); padding:8px 12px; border-radius:8px; cursor:pointer; border:1px solid rgba(255,255,255,0.1); transition:all 0.2s ease;">
+                        <img src="${runeUrl}" alt="${rune.name}" style="width:36px; height:36px;"/>
+                        <span style="font-weight:bold; color:#fff; font-size:12px;">${rune.name}</span>
+                    </div>
+                `);
+                card.hover(
+                    function() { $(this).css({ transform: 'scale(1.05)', borderColor: '#00d2ff' }); },
+                    function() { $(this).css({ transform: 'scale(1)', borderColor: 'rgba(255,255,255,0.1)' }); }
+                );
+                card.on('click', () => {
+                    insertRuneImageToEditor(runeUrl, rune.name);
+                });
+                grid.append(card);
+            });
+            page.append(grid);
+        });
+        content.append(page);
+    });
+
+    modal.append(content);
+    $('body').append(modal);
+}
+
+function insertRuneImageToEditor(runeUrl, runeName) {
+    const html = `<img src="${runeUrl}" alt="${runeName}" title="${runeName}" style="width:28px; height:28px; vertical-align:middle; margin:0 3px;"/>&nbsp;`;
+    const targetSelector = AppState.lastActiveEditor || '#editor';
+    const $targetEditor = $(targetSelector);
+
+    if ($targetEditor.length && $targetEditor.summernote) {
+        $targetEditor.summernote('focus');
+        $targetEditor.summernote('pasteHTML', html);
+        $targetEditor.summernote('focus');
+    }
+}
+
+
+// --- 아이템 비교 차트 모달 (Item Comparison System) ---
+async function openItemComparisonModal() {
+    const items = await DataDragonService.getItems();
+    if (!items || !Object.keys(items).length) {
+        alert('아이템 데이터를 불러오지 못했습니다.');
+        return;
+    }
+
+    $('#item-modal').remove();
+
+    const modal = $('<div>', { class: 'modal', id: 'item-modal', css: { display: 'flex', zIndex: 999999 } });
+    const content = $('<div>', { class: 'modal-content', css: { width: '92%', maxWidth: '900px', maxHeight: '92vh', overflowY: 'auto' } });
+
+    const header = $('<div>', { css: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' } });
+    header.append('<h3 style="margin:0; color:#fff;">⚔️ 아이템 스탯 비교 차트 <small style="font-size:11px; color:#aaa;">(아이템 선택 시 스탯 비교 차트 렌더링 & 클릭 시 에디터 삽입)</small></h3>');
+    const closeBtn = $('<button>', { text: '✕ 닫기', class: 'btn btn-danger btn-sm', click: () => modal.remove() });
+    header.append(closeBtn);
+    content.append(header);
+
+    // 아이템 검색창
+    const searchBar = $(`
+        <div style="margin-bottom:15px; display:flex; gap:10px;">
+            <input type="text" id="item-search-input" class="form-control" placeholder="아이템 이름 검색 (예: 무한의 대검, 존야)..." style="background:var(--card-bg); color:#fff; border:1px solid var(--border-color);"/>
+        </div>
+    `);
+    content.append(searchBar);
+
+    // 차트 영역
+    const chartBox = $('<div>', { css: { background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '10px', marginBottom: '15px' } });
+    const canvas = $('<canvas>', { id: 'item-chart', height: 180 });
+    chartBox.append(canvas);
+    content.append(chartBox);
+
+    // 선택된 아이템 태그 목록
+    const selectedItemIds = [];
+    const itemGrid = $('<div>', { id: 'item-grid-list', css: { display: 'flex', flexWrap: 'wrap', gap: '10px', maxHeight: '250px', overflowY: 'auto' } });
+    content.append(itemGrid);
+
+    function renderItemGrid(filterText = '') {
+        itemGrid.empty();
+        const ver = AppState.version;
+
+        for (const id in items) {
+            const item = items[id];
+            if (!item.gold || !item.gold.purchasable) continue; // 구매 불가 아이템 제외
+            if (filterText && !item.name.includes(filterText)) continue;
+
+            const isSelected = selectedItemIds.includes(id);
+            const imgUrl = `https://ddragon.leagueoflegends.com/cdn/${ver}/img/item/${id}.png`;
+
+            const card = $(`
+                <div class="item-card" style="display:flex; align-items:center; gap:6px; background:${isSelected ? 'rgba(0,168,255,0.3)' : 'rgba(0,0,0,0.4)'}; padding:6px 10px; border-radius:6px; cursor:pointer; border:1px solid ${isSelected ? '#00d2ff' : 'rgba(255,255,255,0.1)'};">
+                    <img src="${imgUrl}" alt="${item.name}" style="width:28px; height:28px; border-radius:4px;"/>
+                    <span style="font-size:12px; color:#fff;">${item.name}</span>
+                    <span style="font-size:10px; color:#fbc531; font-weight:bold;">${item.gold.total}G</span>
+                </div>
+            `);
+
+            card.on('click', function(e) {
+                // Shift나 Ctrl 없이 그냥 클릭하면 차트 선택 / 삽입
+                if (selectedItemIds.includes(id)) {
+                    const idx = selectedItemIds.indexOf(id);
+                    selectedItemIds.splice(idx, 1);
+                } else {
+                    if (selectedItemIds.length >= 5) selectedItemIds.shift();
+                    selectedItemIds.push(id);
+                }
+                insertItemImageToEditor(imgUrl, item.name);
+                renderItemGrid($('#item-search-input').val().trim());
+                updateItemChart();
+            });
+
+            itemGrid.append(card);
+        }
+    }
+
+    let itemChartInstance = null;
+
+    function updateItemChart() {
+        if (!selectedItemIds.length) return;
+        const ctx = document.getElementById('item-chart').getContext('2d');
+        const ver = AppState.version;
+
+        const labels = selectedItemIds.map(id => items[id].name);
+        const adData = selectedItemIds.map(id => (items[id].stats ? items[id].stats.FlatPhysicalDamageMod || 0 : 0));
+        const apData = selectedItemIds.map(id => (items[id].stats ? items[id].stats.FlatMagicDamageMod || 0 : 0));
+        const hpData = selectedItemIds.map(id => (items[id].stats ? items[id].stats.FlatHPPool || 0 : 0));
+        const armorData = selectedItemIds.map(id => (items[id].stats ? items[id].stats.FlatArmorMod || 0 : 0));
+        const goldData = selectedItemIds.map(id => (items[id].gold ? (items[id].gold.total / 10) || 0 : 0)); // 골드는 1/10 비율
+
+        if (itemChartInstance) itemChartInstance.destroy();
+
+        itemChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: '공격력(AD)', data: adData, backgroundColor: 'rgba(232, 65, 24, 0.8)' },
+                    { label: '주문력(AP)', data: apData, backgroundColor: 'rgba(156, 136, 255, 0.8)' },
+                    { label: '체력(HP)', data: hpData, backgroundColor: 'rgba(76, 209, 55, 0.8)' },
+                    { label: '방어력(Armor)', data: armorData, backgroundColor: 'rgba(251, 197, 49, 0.8)' },
+                    { label: '가격 (10G 단위)', data: goldData, backgroundColor: 'rgba(0, 168, 255, 0.6)' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#fff' } },
+                    y: { ticks: { color: '#aaa' } }
+                }
+            }
+        });
+    }
+
+    content.find('#item-search-input').on('input', function() {
+        renderItemGrid($(this).val().trim());
+    });
+
+    modal.append(content);
+    $('body').append(modal);
+
+    renderItemGrid();
+}
+
+function insertItemImageToEditor(imgUrl, itemName) {
+    const html = `<img src="${imgUrl}" alt="${itemName}" title="${itemName}" style="width:28px; height:28px; border-radius:4px; vertical-align:middle; margin:0 3px; border:1px solid rgba(255,255,255,0.2);"/>&nbsp;`;
+    const targetSelector = AppState.lastActiveEditor || '#editor';
+    const $targetEditor = $(targetSelector);
+
+    if ($targetEditor.length && $targetEditor.summernote) {
+        $targetEditor.summernote('focus');
+        $targetEditor.summernote('pasteHTML', html);
+        $targetEditor.summernote('focus');
+    }
 }
 
 

@@ -54,6 +54,8 @@ $(document).ready(async function() {
     // 모달 및 확대 포커스 이벤트
     $('#select-champion-button').on('click', displayRoleSelection);
     $('#close-modal-button').on('click', () => $('#champion-selection').fadeOut(200));
+    $('#open-rune-modal-button').on('click', openRuneSelectionModal);
+    $('#open-item-modal-button').on('click', openItemComparisonModal);
     $('#open-popup-button').on('click', function() {
         $('#main-container').toggleClass('focus-mode');
         $(this).text($('#main-container').hasClass('focus-mode') ? '↙️ 축소하기' : '🔍 밴픽 화면 크게보기');

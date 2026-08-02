@@ -92,6 +92,34 @@ const DataDragonService = {
             console.error(`챔피언 상세 정보 로드 실패 (${championId}):`, err);
             return null;
         }
+    },
+
+    async getRunes() {
+        if (AppState.runeList && AppState.runeList.length > 0) return AppState.runeList;
+        const ver = await this.getLatestVersion();
+        try {
+            const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${ver}/data/ko_KR/runesReforged.json`);
+            const data = await res.json();
+            AppState.runeList = data;
+            return data;
+        } catch (err) {
+            console.error('룬 데이터 로드 실패:', err);
+            return [];
+        }
+    },
+
+    async getItems() {
+        if (AppState.itemList && Object.keys(AppState.itemList).length > 0) return AppState.itemList;
+        const ver = await this.getLatestVersion();
+        try {
+            const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${ver}/data/ko_KR/item.json`);
+            const data = await res.json();
+            AppState.itemList = data.data;
+            return data.data;
+        } catch (err) {
+            console.error('아이템 데이터 로드 실패:', err);
+            return {};
+        }
     }
 };
 
